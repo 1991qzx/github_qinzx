@@ -1,0 +1,1747 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>中华万年历</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 480px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        /* 头部 - 中华万年历 */
+        .header {
+            background: linear-gradient(135deg, #8B0000 0%, #DC143C 50%, #8B0000 100%);
+            color: white;
+            padding: 15px 20px;
+            text-align: center;
+            position: relative;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: bold;
+            letter-spacing: 8px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            margin: 0;
+        }
+
+        .header::before,
+        .header::after {
+            content: '❖';
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 20px;
+            opacity: 0.6;
+        }
+
+        .header::before {
+            left: 20px;
+        }
+
+        .header::after {
+            right: 20px;
+        }
+
+        /* 时间和农历信息 - 左右排布 */
+        .info-section {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .time-section {
+            flex: 1;
+            text-align: center;
+            border-right: 1px solid rgba(255,255,255,0.3);
+            padding-right: 15px;
+        }
+
+        .current-time {
+            font-size: 36px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .current-date {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .lunar-section {
+            flex: 1;
+            text-align: center;
+            padding-left: 15px;
+        }
+
+        .lunar-date {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .lunar-shichen {
+            font-size: 16px;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 5px 15px;
+            border-radius: 15px;
+            display: inline-block;
+        }
+
+        .lunar-detail {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+            font-size: 12px;
+            margin-top: 10px;
+            padding: 10px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+        }
+
+        .lunar-detail span {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 3px 10px;
+            border-radius: 10px;
+        }
+
+        /* 生肖展示 - 两排 */
+        .zodiac-section {
+            padding: 15px 20px;
+            background: #fff5f5;
+            border-bottom: 1px solid #ffe0e0;
+        }
+
+        .zodiac-title {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+
+        .zodiac-row {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .zodiac-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .zodiac-item {
+            text-align: center;
+            padding: 8px 12px;
+            border-radius: 10px;
+            transition: all 0.3s;
+            background: white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            min-width: 50px;
+        }
+
+        .zodiac-item.active {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+            color: white;
+            transform: scale(1.15);
+            box-shadow: 0 4px 12px rgba(255, 107, 107, 0.4);
+        }
+
+        .zodiac-item .emoji {
+            font-size: 22px;
+            display: block;
+        }
+
+        .zodiac-item .name {
+            font-size: 12px;
+            margin-top: 2px;
+        }
+
+        /* 日历网格 */
+        .calendar-section {
+            padding: 20px;
+        }
+
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .calendar-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+            justify-content: center;
+        }
+
+        .month-year-select {
+            display: flex;
+            gap: 5px;
+        }
+
+        .month-year-select select {
+            padding: 8px 12px;
+            font-size: 16px;
+            border: 2px solid #ff6b6b;
+            border-radius: 8px;
+            background: white;
+            color: #333;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .today-btn {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+
+        .today-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(255, 107, 107, 0.4);
+        }
+
+        .nav-btn {
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 18px;
+            transition: all 0.3s;
+        }
+
+        .nav-btn:hover {
+            background: #ee5a24;
+            transform: scale(1.1);
+        }
+
+        .weekdays {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+            margin-bottom: 10px;
+        }
+
+        .weekday {
+            text-align: center;
+            font-size: 14px;
+            color: #999;
+            padding: 10px 0;
+        }
+
+        .weekday.weekend {
+            color: #ff6b6b;
+        }
+
+        .days-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+        }
+
+        .day-cell {
+            aspect-ratio: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            padding: 2px;
+        }
+
+        .day-cell:hover {
+            background: #f0f0f0;
+        }
+
+        .day-cell.today {
+            background: #ff6b6b;
+            color: white;
+        }
+
+        .day-cell.selected {
+            background: #667eea;
+            color: white;
+        }
+
+        .day-cell.other-month {
+            color: #ccc;
+        }
+
+        .day-cell .solar {
+            font-size: 16px;
+            font-weight: 500;
+            line-height: 1;
+        }
+
+        .day-cell .lunar {
+            font-size: 9px;
+            margin-top: 1px;
+            opacity: 0.8;
+            line-height: 1.2;
+        }
+
+        .day-cell .lunar-term-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+            margin-top: 1px;
+            font-size: 9px;
+            line-height: 1.2;
+        }
+
+        .day-cell .lunar {
+            font-size: 9px;
+            opacity: 0.8;
+        }
+
+        .day-cell .solar-term {
+            color: #ff6b6b;
+            font-weight: bold;
+            font-size: 9px;
+        }
+
+        .day-cell.today .lunar,
+        .day-cell.selected .lunar {
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .day-cell.today .solar-term,
+        .day-cell.selected .solar-term {
+            color: #ffeb3b;
+        }
+
+        /* 节气展示 */
+        .solar-term-section {
+            padding: 15px 20px;
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+        }
+
+        .solar-term-title {
+            font-size: 14px;
+            margin-bottom: 10px;
+            opacity: 0.9;
+            text-align: center;
+        }
+
+        .solar-term-list {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 10px;
+            scroll-snap-type: x mandatory;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .solar-term-list::-webkit-scrollbar {
+            height: 4px;
+        }
+
+        .solar-term-list::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.2);
+            border-radius: 2px;
+        }
+
+        .solar-term-list::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.5);
+            border-radius: 2px;
+        }
+
+        .solar-term-item {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 10px 15px;
+            border-radius: 15px;
+            white-space: nowrap;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.3s;
+            scroll-snap-align: start;
+            text-align: center;
+            min-width: 70px;
+        }
+
+        .solar-term-item:hover {
+            background: rgba(255, 255, 255, 0.35);
+            transform: translateY(-2px);
+        }
+
+        .solar-term-item.current {
+            background: rgba(255, 255, 255, 0.5);
+            font-weight: bold;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        .solar-term-item .term-date {
+            font-size: 11px;
+            opacity: 0.8;
+            margin-top: 3px;
+        }
+
+        /* 黄历 */
+        .almanac-section {
+            padding: 20px;
+            background: #fff;
+        }
+
+        .almanac-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .almanac-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .almanac-box {
+            padding: 15px;
+            border-radius: 15px;
+        }
+
+        .almanac-box.yi {
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+        }
+
+        .almanac-box.ji {
+            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+        }
+
+        .almanac-box h4 {
+            font-size: 16px;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .almanac-box .tag {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            margin: 3px;
+            color: #555;
+        }
+
+        /* 闹钟功能 */
+        .alarm-section {
+            padding: 20px;
+            background: #f8f9fa;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .alarm-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .alarm-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .add-alarm-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .add-alarm-btn:hover {
+            background: #5a67d8;
+        }
+
+        .alarm-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .alarm-item {
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .alarm-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .alarm-time {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .alarm-label {
+            font-size: 12px;
+            color: #999;
+            margin-top: 3px;
+        }
+
+        .alarm-toggle {
+            position: relative;
+            width: 50px;
+            height: 28px;
+            background: #ddd;
+            border-radius: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .alarm-toggle.active {
+            background: #667eea;
+        }
+
+        .alarm-toggle::after {
+            content: '';
+            position: absolute;
+            width: 24px;
+            height: 24px;
+            background: white;
+            border-radius: 50%;
+            top: 2px;
+            left: 2px;
+            transition: all 0.3s;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .alarm-toggle.active::after {
+            left: 24px;
+        }
+
+        .delete-alarm {
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+
+        /* 星座展示 */
+        .constellation-section {
+            padding: 15px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .constellation-title {
+            font-size: 14px;
+            margin-bottom: 12px;
+            text-align: center;
+            opacity: 0.9;
+        }
+
+        .constellation-list {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .constellation-item {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 8px 12px;
+            border-radius: 20px;
+            text-align: center;
+            transition: all 0.3s;
+            cursor: pointer;
+            min-width: 70px;
+        }
+
+        .constellation-item:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: translateY(-2px);
+        }
+
+        .constellation-item.active {
+            background: rgba(255, 255, 255, 0.4);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            transform: scale(1.05);
+        }
+
+        .constellation-item .emoji {
+            font-size: 20px;
+            display: block;
+        }
+
+        .constellation-item .name {
+            font-size: 11px;
+            margin-top: 2px;
+        }
+
+        .constellation-item .date {
+            font-size: 9px;
+            opacity: 0.7;
+            margin-top: 1px;
+        }
+
+        .current-constellation {
+            text-align: center;
+            margin-top: 10px;
+            padding: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+
+        .current-constellation .label {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+
+        .current-constellation .value {
+            font-size: 16px;
+            font-weight: bold;
+            margin-top: 2px;
+        }
+
+        /* 闹钟弹窗 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 350px;
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .time-picker {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .time-picker select {
+            padding: 10px 15px;
+            font-size: 18px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            background: white;
+        }
+
+        .alarm-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .modal-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        .modal-btn.confirm {
+            background: #667eea;
+            color: white;
+        }
+
+        .modal-btn.cancel {
+            background: #f0f0f0;
+            color: #666;
+        }
+
+        /* 闹钟响铃 */
+        .alarm-ring {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(102, 126, 234, 0.95);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        .alarm-ring.active {
+            display: flex;
+        }
+
+        .alarm-ring .bell {
+            font-size: 100px;
+            animation: ring 0.5s ease-in-out infinite alternate;
+        }
+
+        @keyframes ring {
+            from { transform: rotate(-15deg); }
+            to { transform: rotate(15deg); }
+        }
+
+        .alarm-ring .ring-time {
+            font-size: 48px;
+            color: white;
+            margin: 20px 0;
+            font-weight: bold;
+        }
+
+        .alarm-ring .ring-label {
+            font-size: 18px;
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 30px;
+        }
+
+        .stop-alarm-btn {
+            background: white;
+            color: #667eea;
+            border: none;
+            padding: 15px 50px;
+            border-radius: 30px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .stop-alarm-btn:hover {
+            transform: scale(1.05);
+        }
+
+        /* 响应式 */
+        @media (max-width: 400px) {
+            .container {
+                border-radius: 0;
+            }
+            
+            body {
+                padding: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 头部 -->
+        <div class="header">
+            <h1>中华万年历</h1>
+        </div>
+
+        <!-- 时间和农历信息 - 左右排布 -->
+        <div class="info-section">
+            <div class="time-section">
+                <div class="current-time" id="currentTime">00:00:00</div>
+                <div class="current-date" id="currentDate">2024年1月1日</div>
+            </div>
+            <div class="lunar-section">
+                <div class="lunar-date" id="lunarDate">腊月初一</div>
+                <div class="lunar-shichen" id="lunarShichen">子时</div>
+            </div>
+        </div>
+        <div class="lunar-detail">
+            <span id="ganZhi">癸卯年</span>
+            <span id="zodiac">兔年</span>
+            <span id="lunarMonth">腊月</span>
+        </div>
+
+        <!-- 十二生肖 - 两排展示 -->
+        <div class="zodiac-section">
+            <div class="zodiac-title">十二生肖 · <span id="currentZodiacYear">兔年</span></div>
+            <div class="zodiac-row">
+                <div class="zodiac-item" data-zodiac="鼠"><span class="emoji">🐭</span><span class="name">鼠</span></div>
+                <div class="zodiac-item" data-zodiac="牛"><span class="emoji">🐮</span><span class="name">牛</span></div>
+                <div class="zodiac-item" data-zodiac="虎"><span class="emoji">🐯</span><span class="name">虎</span></div>
+                <div class="zodiac-item" data-zodiac="兔"><span class="emoji">🐰</span><span class="name">兔</span></div>
+                <div class="zodiac-item" data-zodiac="龙"><span class="emoji">🐲</span><span class="name">龙</span></div>
+                <div class="zodiac-item" data-zodiac="蛇"><span class="emoji">🐍</span><span class="name">蛇</span></div>
+            </div>
+            <div class="zodiac-row">
+                <div class="zodiac-item" data-zodiac="马"><span class="emoji">🐴</span><span class="name">马</span></div>
+                <div class="zodiac-item" data-zodiac="羊"><span class="emoji">🐑</span><span class="name">羊</span></div>
+                <div class="zodiac-item" data-zodiac="猴"><span class="emoji">🐵</span><span class="name">猴</span></div>
+                <div class="zodiac-item" data-zodiac="鸡"><span class="emoji">🐔</span><span class="name">鸡</span></div>
+                <div class="zodiac-item" data-zodiac="狗"><span class="emoji">🐶</span><span class="name">狗</span></div>
+                <div class="zodiac-item" data-zodiac="猪"><span class="emoji">🐷</span><span class="name">猪</span></div>
+            </div>
+        </div>
+
+        <!-- 日历 -->
+        <div class="calendar-section">
+            <div class="calendar-header">
+                <button class="nav-btn" onclick="changeMonth(-1)">‹</button>
+                <div class="calendar-controls">
+                    <div class="month-year-select">
+                        <select id="yearSelect" onchange="onYearMonthChange()"></select>
+                        <select id="monthSelect" onchange="onYearMonthChange()"></select>
+                    </div>
+                    <button class="today-btn" onclick="goToToday()">返回今天</button>
+                </div>
+                <button class="nav-btn" onclick="changeMonth(1)">›</button>
+            </div>
+            <div class="weekdays">
+                <div class="weekday">日</div>
+                <div class="weekday">一</div>
+                <div class="weekday">二</div>
+                <div class="weekday">三</div>
+                <div class="weekday">四</div>
+                <div class="weekday">五</div>
+                <div class="weekday weekend">六</div>
+            </div>
+            <div class="days-grid" id="daysGrid"></div>
+        </div>
+
+        <!-- 十二星座 -->
+        <div class="constellation-section">
+            <div class="constellation-title">十二星座 · 点击选择</div>
+            <div class="constellation-list" id="constellationList">
+                <div class="constellation-item" data-constellation="白羊座" data-start="3-21" data-end="4-19">
+                    <span class="emoji">♈</span>
+                    <span class="name">白羊座</span>
+                    <span class="date">3.21-4.19</span>
+                </div>
+                <div class="constellation-item" data-constellation="金牛座" data-start="4-20" data-end="5-20">
+                    <span class="emoji">♉</span>
+                    <span class="name">金牛座</span>
+                    <span class="date">4.20-5.20</span>
+                </div>
+                <div class="constellation-item" data-constellation="双子座" data-start="5-21" data-end="6-21">
+                    <span class="emoji">♊</span>
+                    <span class="name">双子座</span>
+                    <span class="date">5.21-6.21</span>
+                </div>
+                <div class="constellation-item" data-constellation="巨蟹座" data-start="6-22" data-end="7-22">
+                    <span class="emoji">♋</span>
+                    <span class="name">巨蟹座</span>
+                    <span class="date">6.22-7.22</span>
+                </div>
+                <div class="constellation-item" data-constellation="狮子座" data-start="7-23" data-end="8-22">
+                    <span class="emoji">♌</span>
+                    <span class="name">狮子座</span>
+                    <span class="date">7.23-8.22</span>
+                </div>
+                <div class="constellation-item" data-constellation="处女座" data-start="8-23" data-end="9-22">
+                    <span class="emoji">♍</span>
+                    <span class="name">处女座</span>
+                    <span class="date">8.23-9.22</span>
+                </div>
+                <div class="constellation-item" data-constellation="天秤座" data-start="9-23" data-end="10-23">
+                    <span class="emoji">♎</span>
+                    <span class="name">天秤座</span>
+                    <span class="date">9.23-10.23</span>
+                </div>
+                <div class="constellation-item" data-constellation="天蝎座" data-start="10-24" data-end="11-22">
+                    <span class="emoji">♏</span>
+                    <span class="name">天蝎座</span>
+                    <span class="date">10.24-11.22</span>
+                </div>
+                <div class="constellation-item" data-constellation="射手座" data-start="11-23" data-end="12-21">
+                    <span class="emoji">♐</span>
+                    <span class="name">射手座</span>
+                    <span class="date">11.23-12.21</span>
+                </div>
+                <div class="constellation-item" data-constellation="摩羯座" data-start="12-22" data-end="1-19">
+                    <span class="emoji">♑</span>
+                    <span class="name">摩羯座</span>
+                    <span class="date">12.22-1.19</span>
+                </div>
+                <div class="constellation-item" data-constellation="水瓶座" data-start="1-20" data-end="2-18">
+                    <span class="emoji">♒</span>
+                    <span class="name">水瓶座</span>
+                    <span class="date">1.20-2.18</span>
+                </div>
+                <div class="constellation-item" data-constellation="双鱼座" data-start="2-19" data-end="3-20">
+                    <span class="emoji">♓</span>
+                    <span class="name">双鱼座</span>
+                    <span class="date">2.19-3.20</span>
+                </div>
+            </div>
+            <div class="current-constellation">
+                <div class="label">当前日期星座</div>
+                <div class="value" id="currentConstellation">--</div>
+            </div>
+        </div>
+
+        <!-- 二十四节气 -->
+        <div class="solar-term-section">
+            <div class="solar-term-title">二十四节气 · 点击跳转</div>
+            <div class="solar-term-list" id="solarTermList"></div>
+        </div>
+
+        <!-- 黄历 -->
+        <div class="almanac-section">
+            <div class="almanac-title">今日黄历</div>
+            <div class="almanac-content">
+                <div class="almanac-box yi">
+                    <h4>宜</h4>
+                    <div id="yiList"></div>
+                </div>
+                <div class="almanac-box ji">
+                    <h4>忌</h4>
+                    <div id="jiList"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 闹钟 -->
+        <div class="alarm-section">
+            <div class="alarm-header">
+                <div class="alarm-title">闹钟</div>
+                <button class="add-alarm-btn" onclick="openAlarmModal()">+ 添加闹钟</button>
+            </div>
+            <div class="alarm-list" id="alarmList"></div>
+        </div>
+    </div>
+
+    <!-- 添加闹钟弹窗 -->
+    <div class="modal" id="alarmModal">
+        <div class="modal-content">
+            <div class="modal-title">添加闹钟</div>
+            <div class="time-picker">
+                <select id="hourSelect"></select>
+                <span>:</span>
+                <select id="minuteSelect"></select>
+            </div>
+            <input type="text" class="alarm-input" id="alarmLabel" placeholder="闹钟标签（可选）">
+            <div class="modal-buttons">
+                <button class="modal-btn cancel" onclick="closeAlarmModal()">取消</button>
+                <button class="modal-btn confirm" onclick="addAlarm()">确定</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 闹钟响铃 -->
+    <div class="alarm-ring" id="alarmRing">
+        <div class="bell">🔔</div>
+        <div class="ring-time" id="ringTime">00:00</div>
+        <div class="ring-label" id="ringLabel">闹钟</div>
+        <button class="stop-alarm-btn" onclick="stopAlarm()">关闭闹钟</button>
+    </div>
+
+    <script>
+        // ==================== 农历数据 ====================
+        const lunarInfo = [
+            0x04bd8,0x04ae0,0x0a570,0x054d5,0x0d260,0x0d950,0x16554,0x056a0,0x09ad0,0x055d2,
+            0x04ae0,0x0a5b6,0x0a4d0,0x0d250,0x1d255,0x0b540,0x0d6a0,0x0ada2,0x095b0,0x14977,
+            0x04970,0x0a4b0,0x0b4b5,0x06a50,0x06d40,0x1ab54,0x02b60,0x09570,0x052f2,0x04970,
+            0x06566,0x0d4a0,0x0ea50,0x06e95,0x05ad0,0x02b60,0x186e3,0x092e0,0x1c8d7,0x0c950,
+            0x0d4a0,0x1d8a6,0x0b550,0x056a0,0x1a5b4,0x025d0,0x092d0,0x0d2b2,0x0a950,0x0b557,
+            0x06ca0,0x0b550,0x15355,0x04da0,0x0a5d0,0x14573,0x052d0,0x0a9a8,0x0e950,0x06aa0,
+            0x0aea6,0x0ab50,0x04b60,0x0aae4,0x0a570,0x05260,0x0f263,0x0d950,0x05b57,0x056a0,
+            0x096d0,0x04dd5,0x04ad0,0x0a4d0,0x0d4d4,0x0d250,0x0d558,0x0b540,0x0b5a0,0x195a6,
+            0x095b0,0x049b0,0x0a974,0x0a4b0,0x0b27a,0x06a50,0x06d40,0x0af46,0x0ab60,0x09570,
+            0x04af5,0x04970,0x064b0,0x074a3,0x0ea50,0x06b58,0x055c0,0x0ab60,0x096d5,0x092e0,
+            0x0c960,0x0d954,0x0d4a0,0x0da50,0x07552,0x056a0,0x0abb7,0x025d0,0x092d0,0x0cab5,
+            0x0a950,0x0b4a0,0x0baa4,0x0ad50,0x055d9,0x04ba0,0x0a5b0,0x15176,0x052b0,0x0a930,
+            0x07954,0x06aa0,0x0ad50,0x05b52,0x04b60,0x0a6e6,0x0a4e0,0x0d260,0x0ea65,0x0d530,
+            0x05aa0,0x076a3,0x096d0,0x04bd7,0x04ad0,0x0a4d0,0x1d0b6,0x0d250,0x0d520,0x0dd45,
+            0x0b5a0,0x056d0,0x055b2,0x049b0,0x0a577,0x0a4b0,0x0aa50,0x1b255,0x06d20,0x0ada0
+        ];
+
+        const Gan = ["甲","乙","丙","丁","戊","己","庚","辛","壬","癸"];
+        const Zhi = ["子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥"];
+        const Animals = ["鼠","牛","虎","兔","龙","蛇","马","羊","猴","鸡","狗","猪"];
+        const solarTerm = [
+            "小寒","大寒","立春","雨水","惊蛰","春分",
+            "清明","谷雨","立夏","小满","芒种","夏至",
+            "小暑","大暑","立秋","处暑","白露","秋分",
+            "寒露","霜降","立冬","小雪","大雪","冬至"
+        ];
+        const lunarMonthName = ["正","二","三","四","五","六","七","八","九","十","冬","腊"];
+        const lunarDayName = [
+            "初一","初二","初三","初四","初五","初六","初七","初八","初九","初十",
+            "十一","十二","十三","十四","十五","十六","十七","十八","十九","二十",
+            "廿一","廿二","廿三","廿四","廿五","廿六","廿七","廿八","廿九","三十"
+        ];
+
+        // 黄历宜忌数据
+        const yiJiData = {
+            yi: ["祭祀", "祈福", "求嗣", "开光", "出行", "解除", "伐木", "拆卸", "修造", "动土", 
+                 "起基", "安床", "纳畜", "入殓", "破土", "安葬", "嫁娶", "纳采", "订盟", 
+                 "开市", "交易", "立券", "挂匾", "纳财", "栽种", "移徙", "入宅", "出火"],
+            ji: ["作灶", "安床", "开仓", "盖屋", "安葬", "行丧", "探病", "嫁娶", "移徙", 
+                 "入宅", "安门", "开市", "出火", "作灶", "破土", "动土", "伐木", "上梁"]
+        };
+
+        // ==================== 星座计算 ====================
+        const constellations = [
+            { name: "白羊座", emoji: "♈", startMonth: 3, startDay: 21, endMonth: 4, endDay: 19 },
+            { name: "金牛座", emoji: "♉", startMonth: 4, startDay: 20, endMonth: 5, endDay: 20 },
+            { name: "双子座", emoji: "♊", startMonth: 5, startDay: 21, endMonth: 6, endDay: 21 },
+            { name: "巨蟹座", emoji: "♋", startMonth: 6, startDay: 22, endMonth: 7, endDay: 22 },
+            { name: "狮子座", emoji: "♌", startMonth: 7, startDay: 23, endMonth: 8, endDay: 22 },
+            { name: "处女座", emoji: "♍", startMonth: 8, startDay: 23, endMonth: 9, endDay: 22 },
+            { name: "天秤座", emoji: "♎", startMonth: 9, startDay: 23, endMonth: 10, endDay: 23 },
+            { name: "天蝎座", emoji: "♏", startMonth: 10, startDay: 24, endMonth: 11, endDay: 22 },
+            { name: "射手座", emoji: "♐", startMonth: 11, startDay: 23, endMonth: 12, endDay: 21 },
+            { name: "摩羯座", emoji: "♑", startMonth: 12, startDay: 22, endMonth: 1, endDay: 19 },
+            { name: "水瓶座", emoji: "♒", startMonth: 1, startDay: 20, endMonth: 2, endDay: 18 },
+            { name: "双鱼座", emoji: "♓", startMonth: 2, startDay: 19, endMonth: 3, endDay: 20 }
+        ];
+
+        function getConstellation(date) {
+            const month = date.getMonth() + 1;
+            const day = date.getDate();
+            
+            for (let c of constellations) {
+                if (c.name === "摩羯座") {
+                    // 摩羯座跨年度特殊处理
+                    if ((month === 12 && day >= c.startDay) || (month === 1 && day <= c.endDay)) {
+                        return c;
+                    }
+                } else if (c.startMonth === c.endMonth) {
+                    // 同一个月
+                    if (month === c.startMonth && day >= c.startDay && day <= c.endDay) {
+                        return c;
+                    }
+                } else {
+                    // 跨月
+                    if ((month === c.startMonth && day >= c.startDay) ||
+                        (month === c.endMonth && day <= c.endDay)) {
+                        return c;
+                    }
+                }
+            }
+            return constellations[9]; // 默认摩羯座
+        }
+
+        function updateConstellation(date) {
+            const constellation = getConstellation(date);
+            document.getElementById('currentConstellation').textContent = 
+                `${constellation.emoji} ${constellation.name}`;
+            
+            // 高亮当前星座
+            document.querySelectorAll('.constellation-item').forEach(item => {
+                item.classList.toggle('active', item.dataset.constellation === constellation.name);
+            });
+        }
+
+        function initConstellationClick() {
+            document.querySelectorAll('.constellation-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    const startDate = this.dataset.start;
+                    const [month, day] = startDate.split('-').map(Number);
+                    
+                    // 跳转到该星座开始的日期（当前年份）
+                    const year = displayDate.getFullYear();
+                    const targetDate = new Date(year, month - 1, day);
+                    
+                    selectedDate = targetDate;
+                    displayDate = new Date(targetDate);
+                    
+                    // 更新选择器
+                    document.getElementById('yearSelect').value = year;
+                    document.getElementById('monthSelect').value = month - 1;
+                    
+                    updateLunarInfo(targetDate);
+                    updateSolarTerms(targetDate);
+                    updateAlmanac(targetDate);
+                    updateConstellation(targetDate);
+                    renderCalendar();
+                });
+            });
+        }
+
+        // ==================== 农历转换函数 ====================
+        function lYearDays(y) {
+            let i, sum = 348;
+            for (i = 0x8000; i > 0x8; i >>= 1) sum += (lunarInfo[y - 1900] & i) ? 1 : 0;
+            return (sum + leapDays(y));
+        }
+
+        function leapDays(y) {
+            if (leapMonth(y)) return ((lunarInfo[y - 1900] & 0x10000) ? 30 : 29);
+            return (0);
+        }
+
+        function leapMonth(y) {
+            return (lunarInfo[y - 1900] & 0xf);
+        }
+
+        function monthDays(y, m) {
+            return ((lunarInfo[y - 1900] & (0x10000 >> m)) ? 30 : 29);
+        }
+
+        function toLunar(objDate) {
+            let i, leap = 0, temp = 0;
+            let baseDate = new Date(1900, 0, 31);
+            let offset = (objDate - baseDate) / 86400000;
+
+            for (i = 1900; i < 2050 && offset > 0; i++) {
+                temp = lYearDays(i);
+                offset -= temp;
+            }
+
+            if (offset < 0) {
+                offset += temp;
+                i--;
+            }
+
+            let year = i;
+            leap = leapMonth(i);
+            let isLeap = false;
+
+            for (i = 1; i < 13 && offset > 0; i++) {
+                if (leap > 0 && i == (leap + 1) && isLeap == false) {
+                    --i;
+                    isLeap = true;
+                    temp = leapDays(year);
+                } else {
+                    temp = monthDays(year, i);
+                }
+
+                if (isLeap == true && i == (leap + 1)) isLeap = false;
+                offset -= temp;
+            }
+
+            if (offset == 0 && leap > 0 && i == leap + 1) {
+                if (isLeap) {
+                    isLeap = false;
+                } else {
+                    isLeap = true;
+                    --i;
+                }
+            }
+
+            if (offset < 0) {
+                offset += temp;
+                --i;
+            }
+
+            let month = i;
+            let day = offset + 1;
+
+            return {
+                year: year,
+                month: month,
+                day: Math.floor(day),
+                isLeap: isLeap,
+                monthName: lunarMonthName[month - 1] + "月",
+                dayName: lunarDayName[Math.floor(day) - 1]
+            };
+        }
+
+        function getGanZhiYear(year) {
+            let gan = Gan[(year - 4) % 10];
+            let zhi = Zhi[(year - 4) % 12];
+            return gan + zhi;
+        }
+
+        function getAnimal(year) {
+            return Animals[(year - 4) % 12];
+        }
+
+        // ==================== 时辰计算 ====================
+        const shichenData = [
+            { name: "子时", start: 23, end: 1, zodiac: "鼠" },
+            { name: "丑时", start: 1, end: 3, zodiac: "牛" },
+            { name: "寅时", start: 3, end: 5, zodiac: "虎" },
+            { name: "卯时", start: 5, end: 7, zodiac: "兔" },
+            { name: "辰时", start: 7, end: 9, zodiac: "龙" },
+            { name: "巳时", start: 9, end: 11, zodiac: "蛇" },
+            { name: "午时", start: 11, end: 13, zodiac: "马" },
+            { name: "未时", start: 13, end: 15, zodiac: "羊" },
+            { name: "申时", start: 15, end: 17, zodiac: "猴" },
+            { name: "酉时", start: 17, end: 19, zodiac: "鸡" },
+            { name: "戌时", start: 19, end: 21, zodiac: "狗" },
+            { name: "亥时", start: 21, end: 23, zodiac: "猪" }
+        ];
+
+        function getCurrentShichen(hour) {
+            for (let sc of shichenData) {
+                if (sc.start > sc.end) {
+                    // 跨天的情况（子时）
+                    if (hour >= sc.start || hour < sc.end) {
+                        return sc;
+                    }
+                } else {
+                    if (hour >= sc.start && hour < sc.end) {
+                        return sc;
+                    }
+                }
+            }
+            return shichenData[0];
+        }
+
+        // ==================== 节气计算 ====================
+        function getTerm(y, n) {
+            const termInfo = [
+                6, 20, 4, 19, 6, 21, 5, 20, 6, 21, 6, 22, 7, 23, 8, 23, 8, 23, 9, 24, 8, 23, 7, 22
+            ];
+            return new Date(y, Math.floor(n / 2), termInfo[n]);
+        }
+
+        function getSolarTerms(year) {
+            let terms = [];
+            for (let i = 0; i < 24; i++) {
+                let termDate = getTerm(year, i);
+                terms.push({
+                    name: solarTerm[i],
+                    date: termDate,
+                    month: termDate.getMonth() + 1,
+                    day: termDate.getDate(),
+                    index: i
+                });
+            }
+            return terms;
+        }
+
+        function getCurrentSolarTerm(date) {
+            let year = date.getFullYear();
+            let terms = getSolarTerms(year);
+            let current = null;
+            let currentIndex = -1;
+
+            for (let i = 0; i < terms.length; i++) {
+                if (date >= terms[i].date) {
+                    current = terms[i];
+                    currentIndex = i;
+                }
+            }
+
+            return { current, currentIndex, all: terms };
+        }
+
+        // ==================== 黄历宜忌 ====================
+        function getAlmanac(date) {
+            const day = date.getDate();
+            const month = date.getMonth() + 1;
+            
+            // 基于日期生成宜忌（简化算法）
+            const seed = day * 31 + month * 12;
+            const yi = [];
+            const ji = [];
+            
+            for (let i = 0; i < 5; i++) {
+                yi.push(yiJiData.yi[(seed + i) % yiJiData.yi.length]);
+                ji.push(yiJiData.ji[(seed + i + 7) % yiJiData.ji.length]);
+            }
+            
+            return { yi: [...new Set(yi)], ji: [...new Set(ji)] };
+        }
+
+        // ==================== 日历显示 ====================
+        let currentDate = new Date();
+        let selectedDate = new Date();
+        let displayDate = new Date();
+
+        function updateTime() {
+            const now = new Date();
+            const hours = now.getHours();
+            
+            document.getElementById('currentTime').textContent = 
+                now.toLocaleTimeString('zh-CN', { hour12: false });
+            document.getElementById('currentDate').textContent = 
+                now.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' });
+            
+            // 更新时辰
+            const shichen = getCurrentShichen(hours);
+            document.getElementById('lunarShichen').textContent = shichen.name;
+        }
+
+        function updateLunarInfo(date) {
+            const lunar = toLunar(date);
+            const ganZhi = getGanZhiYear(lunar.year);
+            const animal = getAnimal(lunar.year);
+
+            document.getElementById('lunarDate').textContent = 
+                `${lunar.monthName}${lunar.dayName}`;
+            document.getElementById('ganZhi').textContent = `${ganZhi}年`;
+            document.getElementById('zodiac').textContent = `${animal}年`;
+            document.getElementById('lunarMonth').textContent = lunar.isLeap ? `闰${lunar.monthName}` : lunar.monthName;
+            document.getElementById('currentZodiacYear').textContent = `${animal}年`;
+
+            // 更新生肖高亮
+            document.querySelectorAll('.zodiac-item').forEach(item => {
+                item.classList.toggle('active', item.dataset.zodiac === animal);
+            });
+        }
+
+        function updateSolarTerms(date) {
+            const { current, currentIndex, all } = getCurrentSolarTerm(date);
+            const container = document.getElementById('solarTermList');
+            const year = date.getFullYear();
+            
+            let html = '';
+            
+            // 显示全部24节气
+            for (let i = 0; i < all.length; i++) {
+                const term = all[i];
+                const isCurrent = i === currentIndex;
+                html += `
+                    <div class="solar-term-item ${isCurrent ? 'current' : ''}" 
+                         onclick="jumpToSolarTerm(${year}, ${i})"
+                         title="点击跳转到${term.name}">
+                        <div>${term.name}</div>
+                        <div class="term-date">${term.month}月${term.day}日</div>
+                    </div>
+                `;
+            }
+            
+            container.innerHTML = html;
+            
+            // 滚动到当前节气
+            setTimeout(() => {
+                const currentEl = container.querySelector('.current');
+                if (currentEl) {
+                    currentEl.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                }
+            }, 100);
+        }
+
+        function jumpToSolarTerm(year, termIndex) {
+            const termDate = getTerm(year, termIndex);
+            selectedDate = termDate;
+            displayDate = new Date(termDate);
+            
+            // 更新年月选择器
+            document.getElementById('yearSelect').value = year;
+            document.getElementById('monthSelect').value = termDate.getMonth();
+            
+            updateLunarInfo(termDate);
+            updateSolarTerms(termDate);
+            updateAlmanac(termDate);
+            renderCalendar();
+        }
+
+        function updateAlmanac(date) {
+            const { yi, ji } = getAlmanac(date);
+            document.getElementById('yiList').innerHTML = yi.map(y => `<span class="tag">${y}</span>`).join('');
+            document.getElementById('jiList').innerHTML = ji.map(j => `<span class="tag">${j}</span>`).join('');
+        }
+
+        function initYearMonthSelect() {
+            const yearSelect = document.getElementById('yearSelect');
+            const monthSelect = document.getElementById('monthSelect');
+            const currentYear = new Date().getFullYear();
+            
+            // 初始化年份选择器（前后50年）
+            for (let y = currentYear - 50; y <= currentYear + 50; y++) {
+                const option = document.createElement('option');
+                option.value = y;
+                option.textContent = y + '年';
+                yearSelect.appendChild(option);
+            }
+            
+            // 初始化月份选择器
+            for (let m = 0; m < 12; m++) {
+                const option = document.createElement('option');
+                option.value = m;
+                option.textContent = (m + 1) + '月';
+                monthSelect.appendChild(option);
+            }
+            
+            // 设置当前值
+            yearSelect.value = displayDate.getFullYear();
+            monthSelect.value = displayDate.getMonth();
+        }
+
+        function onYearMonthChange() {
+            const year = parseInt(document.getElementById('yearSelect').value);
+            const month = parseInt(document.getElementById('monthSelect').value);
+            
+            displayDate.setFullYear(year);
+            displayDate.setMonth(month);
+            renderCalendar();
+        }
+
+        function goToToday() {
+            const today = new Date();
+            selectedDate = today;
+            displayDate = new Date(today);
+            
+            // 更新选择器
+            document.getElementById('yearSelect').value = today.getFullYear();
+            document.getElementById('monthSelect').value = today.getMonth();
+            
+            updateLunarInfo(today);
+            updateSolarTerms(today);
+            updateAlmanac(today);
+            updateConstellation(today);
+            renderCalendar();
+        }
+
+        function renderCalendar() {
+            const year = displayDate.getFullYear();
+            const month = displayDate.getMonth();
+
+            // 更新选择器的值
+            document.getElementById('yearSelect').value = year;
+            document.getElementById('monthSelect').value = month;
+
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const prevLastDay = new Date(year, month, 0);
+
+            const startDayOfWeek = firstDay.getDay();
+            const daysInMonth = lastDay.getDate();
+            const daysInPrevMonth = prevLastDay.getDate();
+
+            const grid = document.getElementById('daysGrid');
+            grid.innerHTML = '';
+
+            // 上月日期
+            for (let i = startDayOfWeek - 1; i >= 0; i--) {
+                const day = daysInPrevMonth - i;
+                const cell = createDayCell(day, true);
+                grid.appendChild(cell);
+            }
+
+            // 当月日期
+            for (let day = 1; day <= daysInMonth; day++) {
+                const date = new Date(year, month, day);
+                const isToday = isSameDay(date, new Date());
+                const isSelected = isSameDay(date, selectedDate);
+                const cell = createDayCell(day, false, isToday, isSelected, date);
+                grid.appendChild(cell);
+            }
+
+            // 下月日期
+            const remainingCells = 42 - (startDayOfWeek + daysInMonth);
+            for (let day = 1; day <= remainingCells; day++) {
+                const cell = createDayCell(day, true);
+                grid.appendChild(cell);
+            }
+        }
+
+        // 获取某天的节气
+        function getSolarTermForDate(date) {
+            const year = date.getFullYear();
+            const terms = getSolarTerms(year);
+            for (let term of terms) {
+                if (term.month === date.getMonth() + 1 && term.day === date.getDate()) {
+                    return term.name;
+                }
+            }
+            return null;
+        }
+
+        function createDayCell(day, isOtherMonth, isToday = false, isSelected = false, date = null) {
+            const cell = document.createElement('div');
+            cell.className = 'day-cell';
+            if (isOtherMonth) cell.classList.add('other-month');
+            if (isToday) cell.classList.add('today');
+            if (isSelected) cell.classList.add('selected');
+
+            let lunarText = '';
+            let solarTermText = '';
+            
+            if (date) {
+                const lunar = toLunar(date);
+                // 如果是初一，显示月份，否则显示农历日期
+                lunarText = lunar.day === 1 ? lunar.monthName : lunar.dayName;
+                
+                // 检查是否是节气日
+                const solarTerm = getSolarTermForDate(date);
+                if (solarTerm) {
+                    solarTermText = solarTerm;
+                }
+            }
+
+            // 构建底部显示内容
+            let bottomContent = '';
+            if (solarTermText && lunarText) {
+                // 节气日同时显示农历+节气
+                bottomContent = `<div class="lunar-term-row"><span class="lunar">${lunarText}</span><span class="solar-term">${solarTermText}</span></div>`;
+            } else if (lunarText) {
+                // 普通日期只显示农历
+                bottomContent = `<span class="lunar">${lunarText}</span>`;
+            }
+
+            cell.innerHTML = `
+                <span class="solar">${day}</span>
+                ${bottomContent}
+            `;
+
+            if (date) {
+                cell.onclick = () => selectDate(date);
+            }
+
+            return cell;
+        }
+
+        function isSameDay(d1, d2) {
+            return d1.getFullYear() === d2.getFullYear() &&
+                   d1.getMonth() === d2.getMonth() &&
+                   d1.getDate() === d2.getDate();
+        }
+
+        function selectDate(date) {
+            selectedDate = date;
+            updateLunarInfo(date);
+            updateSolarTerms(date);
+            updateAlmanac(date);
+            updateConstellation(date);
+            renderCalendar();
+        }
+
+        function changeMonth(delta) {
+            displayDate.setMonth(displayDate.getMonth() + delta);
+            renderCalendar();
+        }
+
+        // ==================== 闹钟功能 ====================
+        let alarms = JSON.parse(localStorage.getItem('alarms') || '[]');
+        let alarmInterval = null;
+        let currentRingingAlarm = null;
+
+        function initAlarmModal() {
+            const hourSelect = document.getElementById('hourSelect');
+            const minuteSelect = document.getElementById('minuteSelect');
+
+            for (let i = 0; i < 24; i++) {
+                const option = document.createElement('option');
+                option.value = i.toString().padStart(2, '0');
+                option.textContent = i.toString().padStart(2, '0');
+                hourSelect.appendChild(option);
+            }
+
+            for (let i = 0; i < 60; i++) {
+                const option = document.createElement('option');
+                option.value = i.toString().padStart(2, '0');
+                option.textContent = i.toString().padStart(2, '0');
+                minuteSelect.appendChild(option);
+            }
+
+            const now = new Date();
+            hourSelect.value = now.getHours().toString().padStart(2, '0');
+            minuteSelect.value = now.getMinutes().toString().padStart(2, '0');
+        }
+
+        function openAlarmModal() {
+            document.getElementById('alarmModal').classList.add('active');
+            document.getElementById('alarmLabel').value = '';
+        }
+
+        function closeAlarmModal() {
+            document.getElementById('alarmModal').classList.remove('active');
+        }
+
+        function addAlarm() {
+            const hour = document.getElementById('hourSelect').value;
+            const minute = document.getElementById('minuteSelect').value;
+            const label = document.getElementById('alarmLabel').value || '闹钟';
+
+            const alarm = {
+                id: Date.now(),
+                time: `${hour}:${minute}`,
+                label: label,
+                active: true
+            };
+
+            alarms.push(alarm);
+            saveAlarms();
+            renderAlarms();
+            closeAlarmModal();
+        }
+
+        function toggleAlarm(id) {
+            const alarm = alarms.find(a => a.id === id);
+            if (alarm) {
+                alarm.active = !alarm.active;
+                saveAlarms();
+                renderAlarms();
+            }
+        }
+
+        function deleteAlarm(id) {
+            alarms = alarms.filter(a => a.id !== id);
+            saveAlarms();
+            renderAlarms();
+        }
+
+        function saveAlarms() {
+            localStorage.setItem('alarms', JSON.stringify(alarms));
+        }
+
+        function renderAlarms() {
+            const container = document.getElementById('alarmList');
+            
+            if (alarms.length === 0) {
+                container.innerHTML = '<div style="text-align: center; color: #999; padding: 20px;">暂无闹钟</div>';
+                return;
+            }
+
+            container.innerHTML = alarms.map(alarm => `
+                <div class="alarm-item">
+                    <div class="alarm-info">
+                        <span class="alarm-time">${alarm.time}</span>
+                        <span class="alarm-label">${alarm.label}</span>
+                    </div>
+                    <div style="display: flex; align-items: center;">
+                        <div class="alarm-toggle ${alarm.active ? 'active' : ''}" onclick="toggleAlarm(${alarm.id})"></div>
+                        <button class="delete-alarm" onclick="deleteAlarm(${alarm.id})">删除</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function checkAlarms() {
+            const now = new Date();
+            const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+            const currentSeconds = now.getSeconds();
+
+            if (currentSeconds === 0) {
+                alarms.forEach(alarm => {
+                    if (alarm.active && alarm.time === currentTime) {
+                        ringAlarm(alarm);
+                    }
+                });
+            }
+        }
+
+        function ringAlarm(alarm) {
+            currentRingingAlarm = alarm;
+            document.getElementById('ringTime').textContent = alarm.time;
+            document.getElementById('ringLabel').textContent = alarm.label;
+            document.getElementById('alarmRing').classList.add('active');
+
+            // 播放提示音
+            playAlarmSound();
+        }
+
+        function playAlarmSound() {
+            // 使用 Web Audio API 生成提示音
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            
+            function playBeep() {
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.value = 800;
+                oscillator.type = 'sine';
+                
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.5);
+            }
+
+            // 连续播放提示音
+            let count = 0;
+            const interval = setInterval(() => {
+                playBeep();
+                count++;
+                if (count >= 10 || !document.getElementById('alarmRing').classList.contains('active')) {
+                    clearInterval(interval);
+                }
+            }, 600);
+        }
+
+        function stopAlarm() {
+            document.getElementById('alarmRing').classList.remove('active');
+            currentRingingAlarm = null;
+        }
+
+        // ==================== 初始化 ====================
+        function init() {
+            updateTime();
+            setInterval(updateTime, 1000);
+
+            initYearMonthSelect();
+            updateLunarInfo(selectedDate);
+            updateSolarTerms(selectedDate);
+            updateAlmanac(selectedDate);
+            updateConstellation(selectedDate);
+            renderCalendar();
+
+            initConstellationClick();
+            initAlarmModal();
+            renderAlarms();
+            setInterval(checkAlarms, 1000);
+        }
+
+        init();
+    </script>
+</body>
+</html>
