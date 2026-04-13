@@ -336,8 +336,9 @@
             opacity: 0.8;
         }
 
+        /* 节气标识 - 使用蓝色，与节假日明显区分 */
         .day-cell .solar-term {
-            color: #ff6b6b;
+            color: #1976d2;
             font-weight: bold;
             font-size: 9px;
         }
@@ -349,13 +350,13 @@
 
         .day-cell.today .solar-term,
         .day-cell.selected .solar-term {
-            color: #ffeb3b;
+            color: #81d4fa;
         }
 
-        /* 节假日标识 */
+        /* 节假日标识 - 使用深红色 */
         .day-cell .holiday {
             font-size: 8px;
-            color: #ff4757;
+            color: #d32f2f;
             font-weight: bold;
             margin-top: 1px;
             line-height: 1.2;
@@ -1208,7 +1209,7 @@
                     document.getElementById('monthSelect').value = month - 1;
                     
                     updateLunarInfo(targetDate);
-                    updateSolarTerms(targetDate);
+                    updateSolarTerms(targetDate, true); // 切换年月时节气居中
                     updateAlmanac(targetDate);
                     updateConstellation(targetDate);
                     renderCalendar();
@@ -1431,7 +1432,7 @@
             });
         }
 
-        function updateSolarTerms(date) {
+        function updateSolarTerms(date, shouldScroll = false) {
             const { current, currentIndex, all } = getCurrentSolarTerm(date);
             const container = document.getElementById('solarTermList');
             const year = date.getFullYear();
@@ -1454,13 +1455,22 @@
             
             container.innerHTML = html;
             
-            // 滚动到当前节气
-            setTimeout(() => {
-                const currentEl = container.querySelector('.current');
-                if (currentEl) {
-                    currentEl.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
-                }
-            }, 100);
+            // 仅在需要时滚动到当前节气（水平居中，不上下滑动屏幕）
+            if (shouldScroll) {
+                setTimeout(() => {
+                    const currentEl = container.querySelector('.current');
+                    if (currentEl) {
+                        // 保存当前垂直滚动位置
+                        const scrollY = window.scrollY;
+                        // 在可视区域内水平居中
+                        currentEl.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                        // 恢复垂直滚动位置，确保不上下滑动
+                        requestAnimationFrame(() => {
+                            window.scrollTo(0, scrollY);
+                        });
+                    }
+                }, 150);
+            }
         }
 
         function jumpToSolarTerm(year, termIndex) {
@@ -1473,7 +1483,7 @@
             document.getElementById('monthSelect').value = termDate.getMonth();
             
             updateLunarInfo(termDate);
-            updateSolarTerms(termDate);
+            updateSolarTerms(termDate, false); // 点击节气跳转时不自动滚动
             updateAlmanac(termDate);
             renderCalendar();
         }
@@ -1529,7 +1539,7 @@
             document.getElementById('monthSelect').value = today.getMonth();
             
             updateLunarInfo(today);
-            updateSolarTerms(today);
+            updateSolarTerms(today, true); // 返回今天时节气居中
             updateAlmanac(today);
             updateConstellation(today);
             renderCalendar();
@@ -1557,7 +1567,11 @@
             // 上月日期
             for (let i = startDayOfWeek - 1; i >= 0; i--) {
                 const day = daysInPrevMonth - i;
-                const cell = createDayCell(day, true);
+                const prevMonth = month - 1;
+                const prevYear = prevMonth < 0 ? year - 1 : year;
+                const actualPrevMonth = prevMonth < 0 ? 11 : prevMonth;
+                const date = new Date(prevYear, actualPrevMonth, day);
+                const cell = createDayCell(day, true, false, false, date);
                 grid.appendChild(cell);
             }
 
@@ -1573,7 +1587,11 @@
             // 下月日期
             const remainingCells = 42 - (startDayOfWeek + daysInMonth);
             for (let day = 1; day <= remainingCells; day++) {
-                const cell = createDayCell(day, true);
+                const nextMonth = month + 1;
+                const nextYear = nextMonth > 11 ? year + 1 : year;
+                const actualNextMonth = nextMonth > 11 ? 0 : nextMonth;
+                const date = new Date(nextYear, actualNextMonth, day);
+                const cell = createDayCell(day, true, false, false, date);
                 grid.appendChild(cell);
             }
         }
@@ -1597,6 +1615,10 @@
             if (isToday) cell.classList.add('today');
             if (isSelected) cell.classList.add('selected');
 
+            if (date) {
+                cell.dataset.date = date.toISOString();
+            }
+
             let lunarText = '';
             let solarTermText = '';
             let holidayText = '';
@@ -1618,20 +1640,19 @@
                 if (holiday) {
                     holidayText = holiday.name;
                     isHoliday = true;
-                    // 节假日添加特殊背景
-                    if (!isToday && !isSelected) {
-                        cell.classList.add('holiday-bg');
-                    }
                 }
             }
 
-            // 构建底部显示内容（优先级：节假日 > 节气 > 农历）
+            // 构建底部显示内容（显示农历+节假日/节气）
             let bottomContent = '';
-            if (holidayText) {
-                // 节假日显示节日名称
-                bottomContent = `<span class="holiday">${holidayText}</span>`;
+            if (holidayText && solarTermText) {
+                // 同时是节假日和节气：显示农历+节假日
+                bottomContent = `<div class="lunar-term-row"><span class="lunar">${lunarText}</span><span class="holiday">${holidayText}</span></div>`;
+            } else if (holidayText) {
+                // 节假日：显示农历+节假日名称
+                bottomContent = `<div class="lunar-term-row"><span class="lunar">${lunarText}</span><span class="holiday">${holidayText}</span></div>`;
             } else if (solarTermText && lunarText) {
-                // 节气日同时显示农历+节气
+                // 节气日：显示农历+节气
                 bottomContent = `<div class="lunar-term-row"><span class="lunar">${lunarText}</span><span class="solar-term">${solarTermText}</span></div>`;
             } else if (lunarText) {
                 // 普通日期只显示农历
@@ -1657,12 +1678,37 @@
         }
 
         function selectDate(date) {
+            // 检查是否点击了非当前月的日期
+            const currentMonth = displayDate.getMonth();
+            const clickedMonth = date.getMonth();
+            if (clickedMonth !== currentMonth) {
+                return; // 非当前月日期不允许选中
+            }
+
             selectedDate = date;
             updateLunarInfo(date);
-            updateSolarTerms(date);
+            updateSolarTerms(date, true); // 选中日期时，节气自动居中
             updateAlmanac(date);
             updateConstellation(date);
-            renderCalendar();
+            updateCalendarSelection();
+        }
+
+        // 只更新日历选中状态，不重新渲染整个日历
+        function updateCalendarSelection() {
+            const cells = document.querySelectorAll('.day-cell');
+            cells.forEach(cell => {
+                cell.classList.remove('selected');
+
+                const cellDateValue = cell.dataset.date;
+                if (!cellDateValue) {
+                    return;
+                }
+
+                const cellDate = new Date(cellDateValue);
+                if (isSameDay(cellDate, selectedDate)) {
+                    cell.classList.add('selected');
+                }
+            });
         }
 
         function changeMonth(delta) {
@@ -1834,7 +1880,7 @@
 
             initYearMonthSelect();
             updateLunarInfo(selectedDate);
-            updateSolarTerms(selectedDate);
+            updateSolarTerms(selectedDate, true); // 启动时节气居中
             updateAlmanac(selectedDate);
             updateConstellation(selectedDate);
             renderCalendar();
