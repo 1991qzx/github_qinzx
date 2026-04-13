@@ -352,6 +352,38 @@
             color: #ffeb3b;
         }
 
+        /* 节假日标识 */
+        .day-cell .holiday {
+            font-size: 8px;
+            color: #ff4757;
+            font-weight: bold;
+            margin-top: 1px;
+            line-height: 1.2;
+        }
+
+        .day-cell .workday {
+            font-size: 8px;
+            color: #2ed573;
+            font-weight: bold;
+            margin-top: 1px;
+            line-height: 1.2;
+        }
+
+        .day-cell.today .holiday,
+        .day-cell.selected .holiday {
+            color: #ffeb3b;
+        }
+
+        .day-cell.today .workday,
+        .day-cell.selected .workday {
+            color: #7bed9f;
+        }
+
+        .day-cell.holiday-bg {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ff4757 100%);
+            color: white;
+        }
+
         /* 节气展示 */
         .solar-term-section {
             padding: 15px 20px;
@@ -1042,12 +1074,68 @@
 
         // 黄历宜忌数据
         const yiJiData = {
-            yi: ["祭祀", "祈福", "求嗣", "开光", "出行", "解除", "伐木", "拆卸", "修造", "动土", 
-                 "起基", "安床", "纳畜", "入殓", "破土", "安葬", "嫁娶", "纳采", "订盟", 
+            yi: ["祭祀", "祈福", "求嗣", "开光", "出行", "解除", "伐木", "拆卸", "修造", "动土",
+                 "起基", "安床", "纳畜", "入殓", "破土", "安葬", "嫁娶", "纳采", "订盟",
                  "开市", "交易", "立券", "挂匾", "纳财", "栽种", "移徙", "入宅", "出火"],
-            ji: ["作灶", "安床", "开仓", "盖屋", "安葬", "行丧", "探病", "嫁娶", "移徙", 
+            ji: ["作灶", "安床", "开仓", "盖屋", "安葬", "行丧", "探病", "嫁娶", "移徙",
                  "入宅", "安门", "开市", "出火", "作灶", "破土", "动土", "伐木", "上梁"]
         };
+
+        // ==================== 节假日数据 ====================
+        // 固定日期节假日（公历）
+        const fixedHolidays = {
+            "1-1": { name: "元旦", type: "holiday" },
+            "2-14": { name: "情人节", type: "holiday" },
+            "3-8": { name: "妇女节", type: "holiday" },
+            "3-12": { name: "植树节", type: "holiday" },
+            "4-1": { name: "愚人节", type: "holiday" },
+            "5-1": { name: "劳动节", type: "holiday" },
+            "5-4": { name: "青年节", type: "holiday" },
+            "6-1": { name: "儿童节", type: "holiday" },
+            "7-1": { name: "建党节", type: "holiday" },
+            "8-1": { name: "建军节", type: "holiday" },
+            "9-10": { name: "教师节", type: "holiday" },
+            "10-1": { name: "国庆节", type: "holiday" },
+            "10-24": { name: "程序员节", type: "holiday" },
+            "11-11": { name: "光棍节", type: "holiday" },
+            "12-24": { name: "平安夜", type: "holiday" },
+            "12-25": { name: "圣诞节", type: "holiday" }
+        };
+
+        // 农历固定节假日
+        const lunarHolidays = {
+            "正月-初一": { name: "春节", type: "holiday" },
+            "正月-十五": { name: "元宵节", type: "holiday" },
+            "五月-初五": { name: "端午节", type: "holiday" },
+            "七月-初七": { name: "七夕节", type: "holiday" },
+            "七月-十五": { name: "中元节", type: "holiday" },
+            "八月-十五": { name: "中秋节", type: "holiday" },
+            "九月-初九": { name: "重阳节", type: "holiday" },
+            "腊月-初八": { name: "腊八节", type: "holiday" },
+            "腊月-廿三": { name: "小年", type: "holiday" },
+            "腊月-除夕": { name: "除夕", type: "holiday" }
+        };
+
+        // 获取节假日信息
+        function getHoliday(date) {
+            const month = date.getMonth() + 1;
+            const day = date.getDate();
+            const key = `${month}-${day}`;
+
+            // 检查公历固定节假日
+            if (fixedHolidays[key]) {
+                return fixedHolidays[key];
+            }
+
+            // 检查农历节假日
+            const lunar = toLunar(date);
+            const lunarKey = `${lunar.monthName}-${lunar.dayName}`;
+            if (lunarHolidays[lunarKey]) {
+                return lunarHolidays[lunarKey];
+            }
+
+            return null;
+        }
 
         // ==================== 星座计算 ====================
         const constellations = [
@@ -1511,22 +1599,38 @@
 
             let lunarText = '';
             let solarTermText = '';
-            
+            let holidayText = '';
+            let isHoliday = false;
+
             if (date) {
                 const lunar = toLunar(date);
                 // 如果是初一，显示月份，否则显示农历日期
                 lunarText = lunar.day === 1 ? lunar.monthName : lunar.dayName;
-                
+
                 // 检查是否是节气日
                 const solarTerm = getSolarTermForDate(date);
                 if (solarTerm) {
                     solarTermText = solarTerm;
                 }
+
+                // 检查是否是节假日
+                const holiday = getHoliday(date);
+                if (holiday) {
+                    holidayText = holiday.name;
+                    isHoliday = true;
+                    // 节假日添加特殊背景
+                    if (!isToday && !isSelected) {
+                        cell.classList.add('holiday-bg');
+                    }
+                }
             }
 
-            // 构建底部显示内容
+            // 构建底部显示内容（优先级：节假日 > 节气 > 农历）
             let bottomContent = '';
-            if (solarTermText && lunarText) {
+            if (holidayText) {
+                // 节假日显示节日名称
+                bottomContent = `<span class="holiday">${holidayText}</span>`;
+            } else if (solarTermText && lunarText) {
                 // 节气日同时显示农历+节气
                 bottomContent = `<div class="lunar-term-row"><span class="lunar">${lunarText}</span><span class="solar-term">${solarTermText}</span></div>`;
             } else if (lunarText) {
