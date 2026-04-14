@@ -1114,41 +1114,50 @@
         };
 
         // ==================== 节假日数据 ====================
-        // 固定日期节假日（公历）
+        // 固定日期节假日（公历）- 支持单日或连续多日假期
+        // 格式: 月-日: { name: "节日名", type: "holiday", days: 天数, color: "颜色" }
         const fixedHolidays = {
-            "1-1": { name: "元旦", type: "holiday" },
-            "2-14": { name: "情人节", type: "holiday" },
-            "3-8": { name: "妇女节", type: "holiday" },
-            "3-12": { name: "植树节", type: "holiday" },
-            "4-1": { name: "愚人节", type: "holiday" },
-            "5-1": { name: "劳动节", type: "holiday" },
-            "5-4": { name: "青年节", type: "holiday" },
-            "6-1": { name: "儿童节", type: "holiday" },
-            "7-1": { name: "建党节", type: "holiday" },
-            "8-1": { name: "建军节", type: "holiday" },
-            "9-10": { name: "教师节", type: "holiday" },
-            "10-1": { name: "国庆节", type: "holiday" },
-            "10-24": { name: "程序员节", type: "holiday" },
-            "11-11": { name: "光棍节", type: "holiday" },
-            "12-24": { name: "平安夜", type: "holiday" },
-            "12-25": { name: "圣诞节", type: "holiday" }
+            // 单日节日
+            "2-14": { name: "情人节", type: "holiday", days: 1 },
+            "3-8": { name: "妇女节", type: "holiday", days: 1 },
+            "3-12": { name: "植树节", type: "holiday", days: 1 },
+            "4-1": { name: "愚人节", type: "holiday", days: 1 },
+            "5-4": { name: "青年节", type: "holiday", days: 1 },
+            "6-1": { name: "儿童节", type: "holiday", days: 1 },
+            "7-1": { name: "建党节", type: "holiday", days: 1 },
+            "8-1": { name: "建军节", type: "holiday", days: 1 },
+            "9-10": { name: "教师节", type: "holiday", days: 1 },
+            "10-24": { name: "程序员节", type: "holiday", days: 1 },
+            "11-11": { name: "光棍节", type: "holiday", days: 1 },
+            "12-24": { name: "平安夜", type: "holiday", days: 1 },
+            "12-25": { name: "圣诞节", type: "holiday", days: 1 },
+            // 连续假期 - 元旦（1月1-3日，共3天）
+            "1-1": { name: "元旦", type: "holiday", days: 3, color: "#81c784" },
+            // 连续假期 - 清明节（4月4-6日，共3天）
+            "4-4": { name: "清明", type: "holiday", days: 3, color: "#81c784" },
+            // 连续假期 - 劳动节（5月1-5日，共5天）
+            "5-1": { name: "劳动节", type: "holiday", days: 5, color: "#81c784" },
+            // 连续假期 - 端午节（农历五月初五，公历不固定，这里用6月10日左右示例）
+            // 实际应根据农历计算，简化处理
+            // 连续假期 - 国庆节（10月1-7日，共7天）
+            "10-1": { name: "国庆节", type: "holiday", days: 7, color: "#81c784" }
         };
 
         // 农历固定节假日
         const lunarHolidays = {
-            "正月-初一": { name: "春节", type: "holiday" },
-            "正月-十五": { name: "元宵节", type: "holiday" },
-            "五月-初五": { name: "端午节", type: "holiday" },
-            "七月-初七": { name: "七夕节", type: "holiday" },
-            "七月-十五": { name: "中元节", type: "holiday" },
-            "八月-十五": { name: "中秋节", type: "holiday" },
-            "九月-初九": { name: "重阳节", type: "holiday" },
-            "腊月-初八": { name: "腊八节", type: "holiday" },
-            "腊月-廿三": { name: "小年", type: "holiday" },
-            "腊月-除夕": { name: "除夕", type: "holiday" }
+            "正月-初一": { name: "春节", type: "holiday", days: 7, color: "#81c784" },
+            "正月-十五": { name: "元宵节", type: "holiday", days: 1 },
+            "五月-初五": { name: "端午节", type: "holiday", days: 3, color: "#81c784" },
+            "七月-初七": { name: "七夕节", type: "holiday", days: 1 },
+            "七月-十五": { name: "中元节", type: "holiday", days: 1 },
+            "八月-十五": { name: "中秋节", type: "holiday", days: 3, color: "#81c784" },
+            "九月-初九": { name: "重阳节", type: "holiday", days: 1 },
+            "腊月-初八": { name: "腊八节", type: "holiday", days: 1 },
+            "腊月-廿三": { name: "小年", type: "holiday", days: 1 },
+            "腊月-除夕": { name: "除夕", type: "holiday", days: 1, color: "#81c784" }
         };
 
-        // 获取节假日信息
+        // 获取节假日信息（支持连续假期）
         function getHoliday(date) {
             const month = date.getMonth() + 1;
             const day = date.getDate();
@@ -1159,6 +1168,20 @@
                 return fixedHolidays[key];
             }
 
+            // 检查连续假期（如劳动节5天、国庆节7天）
+            for (const [holidayKey, holidayInfo] of Object.entries(fixedHolidays)) {
+                if (holidayInfo.days > 1) {
+                    const [startMonth, startDay] = holidayKey.split('-').map(Number);
+                    // 计算假期范围内的每一天
+                    for (let i = 0; i < holidayInfo.days; i++) {
+                        const checkDate = new Date(date.getFullYear(), startMonth - 1, startDay + i);
+                        if (isSameDay(checkDate, date)) {
+                            return holidayInfo;
+                        }
+                    }
+                }
+            }
+
             // 检查农历节假日
             const lunar = toLunar(date);
             const lunarKey = `${lunar.monthName}-${lunar.dayName}`;
@@ -1166,7 +1189,79 @@
                 return lunarHolidays[lunarKey];
             }
 
+            // 检查农历连续假期（简化处理：通过遍历前后几天来匹配）
+            for (const [holidayKey, holidayInfo] of Object.entries(lunarHolidays)) {
+                if (holidayInfo.days > 1) {
+                    // 检查当前日期前后几天是否匹配该节假日的开始
+                    for (let offset = -holidayInfo.days + 1; offset <= 0; offset++) {
+                        const checkDate = new Date(date);
+                        checkDate.setDate(checkDate.getDate() + offset);
+                        const checkLunar = toLunar(checkDate);
+                        const checkKey = `${checkLunar.monthName}-${checkLunar.dayName}`;
+                        if (checkKey === holidayKey) {
+                            // 找到了节假日的开始，检查当前日期是否在假期范围内
+                            const daysDiff = -offset;
+                            if (daysDiff >= 0 && daysDiff < holidayInfo.days) {
+                                return holidayInfo;
+                            }
+                        }
+                    }
+                }
+            }
+
             return null;
+        }
+
+        // 检查日期是否在连续假期范围内（用于颜色连接）
+        function getHolidayRangeInfo(date) {
+            const month = date.getMonth() + 1;
+            const day = date.getDate();
+            const key = `${month}-${day}`;
+            
+            // 检查公历连续假期
+            for (const [holidayKey, holidayInfo] of Object.entries(fixedHolidays)) {
+                if (holidayInfo.days > 1) {
+                    const [startMonth, startDay] = holidayKey.split('-').map(Number);
+                    for (let i = 0; i < holidayInfo.days; i++) {
+                        const checkDate = new Date(date.getFullYear(), startMonth - 1, startDay + i);
+                        if (isSameDay(checkDate, date)) {
+                            return {
+                                isInRange: true,
+                                isFirstDay: i === 0,
+                                holiday: holidayInfo,
+                                index: i,
+                                total: holidayInfo.days
+                            };
+                        }
+                    }
+                }
+            }
+            
+            // 检查农历连续假期
+            for (const [holidayKey, holidayInfo] of Object.entries(lunarHolidays)) {
+                if (holidayInfo.days > 1) {
+                    for (let offset = -holidayInfo.days + 1; offset <= 0; offset++) {
+                        const checkDate = new Date(date);
+                        checkDate.setDate(checkDate.getDate() + offset);
+                        const checkLunar = toLunar(checkDate);
+                        const checkKey = `${checkLunar.monthName}-${checkLunar.dayName}`;
+                        if (checkKey === holidayKey) {
+                            const daysDiff = -offset;
+                            if (daysDiff >= 0 && daysDiff < holidayInfo.days) {
+                                return {
+                                    isInRange: true,
+                                    isFirstDay: daysDiff === 0,
+                                    holiday: holidayInfo,
+                                    index: daysDiff,
+                                    total: holidayInfo.days
+                                };
+                            }
+                        }
+                    }
+                }
+            }
+            
+            return { isInRange: false };
         }
 
         // ==================== 星座计算 ====================
@@ -1654,6 +1749,8 @@
             let solarTermText = '';
             let holidayText = '';
             let isHoliday = false;
+            let holidayColor = null;
+            let isHolidayFirstDay = false;
 
             if (date) {
                 const lunar = toLunar(date);
@@ -1666,11 +1763,32 @@
                     solarTermText = solarTerm;
                 }
 
-                // 检查是否是节假日
-                const holiday = getHoliday(date);
-                if (holiday) {
-                    holidayText = holiday.name;
+                // 检查是否在连续假期范围内
+                const holidayRange = getHolidayRangeInfo(date);
+                if (holidayRange.isInRange) {
                     isHoliday = true;
+                    holidayColor = holidayRange.holiday.color || '#ff6b6b';
+                    // 只在假期第一天显示节假日名称
+                    if (holidayRange.isFirstDay) {
+                        holidayText = holidayRange.holiday.name;
+                        isHolidayFirstDay = true;
+                    }
+                    // 添加假期背景色（非其他月份）
+                    if (!isOtherMonth && !isToday && !isSelected) {
+                        cell.style.backgroundColor = holidayColor + '20'; // 20%透明度
+                        // 假期第一天左边框，最后一天右边框（调换后的逻辑）
+                        cell.style.borderLeft = holidayRange.index === 0 ? `3px solid ${holidayColor}` : 'none';
+                        cell.style.borderRight = holidayRange.index === holidayRange.total - 1 ? `3px solid ${holidayColor}` : 'none';
+                        cell.style.borderTop = 'none';
+                        cell.style.borderBottom = 'none';
+                    }
+                } else {
+                    // 检查单日节假日
+                    const holiday = getHoliday(date);
+                    if (holiday && holiday.days === 1) {
+                        holidayText = holiday.name;
+                        isHoliday = true;
+                    }
                 }
             }
 
@@ -1680,7 +1798,7 @@
                 // 同时是节假日和节气：显示农历+节假日
                 bottomContent = `<div class="lunar-term-row"><span class="lunar">${lunarText}</span><span class="holiday">${holidayText}</span></div>`;
             } else if (holidayText) {
-                // 节假日：显示农历+节假日名称
+                // 节假日：只在第一天显示农历+节假日名称
                 bottomContent = `<div class="lunar-term-row"><span class="lunar">${lunarText}</span><span class="holiday">${holidayText}</span></div>`;
             } else if (solarTermText && lunarText) {
                 // 节气日：显示农历+节气
