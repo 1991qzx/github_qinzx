@@ -420,6 +420,74 @@
             font-weight: bold;
         }
 
+        .delete-btn {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: rgba(255, 107, 107, 0.9);
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            z-index: 10;
+            opacity: 0;
+            transform: scale(0.8);
+        }
+
+        .image-card:hover .delete-btn {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .delete-btn:hover {
+            background: #ff4757;
+            transform: scale(1.1);
+        }
+
+        .delete-btn::after {
+            content: '🗑️';
+            font-size: 14px;
+        }
+
+        .batch-actions {
+            display: none;
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            padding: 15px 25px;
+            border-radius: 50px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            z-index: 100;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .batch-actions.active {
+            display: flex;
+        }
+
+        .batch-actions .btn {
+            white-space: nowrap;
+        }
+
+        .batch-info {
+            font-size: 14px;
+            color: #666;
+            margin-right: 10px;
+        }
+
+        .batch-info span {
+            font-weight: bold;
+            color: #667eea;
+        }
+
         .modal {
             display: none;
             position: fixed;
@@ -588,6 +656,14 @@
                 <div class="icon">📷</div>
                 <p>点击"选择图片"或拖拽图片到此处</p>
             </div>
+        </div>
+
+        <!-- 批量操作栏 -->
+        <div class="batch-actions" id="batchActions">
+            <span class="batch-info">已选择 <span id="batchCount">0</span> 张</span>
+            <button class="btn btn-primary" onclick="selectAll()">全选</button>
+            <button class="btn btn-secondary" onclick="clearSelection()">取消选择</button>
+            <button class="btn btn-danger" onclick="deleteSelected()">🗑️ 删除选中</button>
         </div>
     </div>
 
@@ -841,6 +917,7 @@
             grid.classList.remove('empty');
             grid.innerHTML = images.map(img => `
                 <div class="image-card ${selectedImages.has(img.id) ? 'selected' : ''}" data-id="${img.id}">
+                    <button class="delete-btn" onclick="deleteImage(${img.id}, event)" title="删除"></button>
                     <div class="image-checkbox ${selectedImages.has(img.id) ? 'checked' : ''}" 
                          onclick="toggleSelection(${img.id}, event)"></div>
                     <div class="image-wrapper" onclick="openModal(${img.id})">
@@ -853,6 +930,8 @@
                     </div>
                 </div>
             `).join('');
+            
+            updateBatchActions();
         }
 
         function toggleSelection(id, event) {
@@ -876,6 +955,56 @@
             }
             
             updateStats();
+            updateBatchActions();
+        }
+
+        function deleteImage(id, event) {
+            event.stopPropagation();
+            
+            const img = images.find(i => i.id === id);
+            if (!img) return;
+            
+            if (confirm(`确定要删除图片 "${img.name}" 吗？`)) {
+                images = images.filter(i => i.id !== id);
+                selectedImages.delete(id);
+                renderImages();
+                updateStats();
+            }
+        }
+
+        function deleteSelected() {
+            if (selectedImages.size === 0) return;
+            
+            if (confirm(`确定要删除选中的 ${selectedImages.size} 张图片吗？`)) {
+                images = images.filter(img => !selectedImages.has(img.id));
+                selectedImages.clear();
+                renderImages();
+                updateStats();
+            }
+        }
+
+        function selectAll() {
+            images.forEach(img => selectedImages.add(img.id));
+            renderImages();
+            updateStats();
+        }
+
+        function clearSelection() {
+            selectedImages.clear();
+            renderImages();
+            updateStats();
+        }
+
+        function updateBatchActions() {
+            const batchActions = document.getElementById('batchActions');
+            const batchCount = document.getElementById('batchCount');
+            
+            if (selectedImages.size > 0) {
+                batchActions.classList.add('active');
+                batchCount.textContent = selectedImages.size;
+            } else {
+                batchActions.classList.remove('active');
+            }
         }
 
         function openModal(id) {
