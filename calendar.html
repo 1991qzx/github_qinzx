@@ -385,6 +385,14 @@
             color: white;
         }
 
+        /* 非当前月的日期置灰显示 */
+        .day-cell.other-month .holiday,
+        .day-cell.other-month .solar-term,
+        .day-cell.other-month .lunar {
+            color: #ccc;
+            opacity: 0.6;
+        }
+
         /* 节气展示 */
         .solar-term-section {
             padding: 15px 20px;

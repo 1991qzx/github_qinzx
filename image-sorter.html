@@ -1,0 +1,1185 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图片排序工具</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: bold;
+            letter-spacing: 4px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        .controls {
+            padding: 25px 30px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .control-label {
+            font-size: 14px;
+            color: #666;
+            font-weight: 500;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+        }
+
+        .file-input-wrapper input[type=file] {
+            position: absolute;
+            left: -9999px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #e0e0e0;
+            color: #666;
+        }
+
+        .btn-secondary:hover {
+            background: #d0d0d0;
+        }
+
+        .btn-danger {
+            background: #ff6b6b;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #ee5a24;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(17, 153, 142, 0.4);
+        }
+
+        .export-options {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1001;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .export-options.active {
+            display: flex;
+        }
+
+        .export-modal {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            width: 100%;
+            max-width: 450px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .export-modal h3 {
+            margin-bottom: 20px;
+            color: #333;
+            font-size: 20px;
+        }
+
+        .export-option {
+            margin-bottom: 20px;
+        }
+
+        .export-option label {
+            display: block;
+            margin-bottom: 8px;
+            color: #666;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .export-option select,
+        .export-option input[type="text"] {
+            width: 100%;
+            padding: 10px 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .export-option input[type="checkbox"] {
+            margin-right: 8px;
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .export-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 25px;
+        }
+
+        .export-buttons .btn {
+            flex: 1;
+        }
+
+        .progress-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1002;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        .progress-overlay.active {
+            display: flex;
+        }
+
+        .progress-container {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        .progress-text {
+            color: #666;
+            font-size: 14px;
+        }
+
+        select {
+            padding: 10px 15px;
+            font-size: 14px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            background: white;
+            color: #333;
+            cursor: pointer;
+            min-width: 150px;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .stats {
+            padding: 15px 30px;
+            background: #fff;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .stat-value {
+            font-weight: bold;
+            color: #667eea;
+            font-size: 18px;
+        }
+
+        .image-grid {
+            padding: 30px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+            min-height: 300px;
+        }
+
+        .image-grid.empty {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #999;
+        }
+
+        .empty-state .icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .empty-state p {
+            font-size: 16px;
+        }
+
+        .image-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .image-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+        }
+
+        .image-card.selected {
+            box-shadow: 0 0 0 3px #667eea;
+        }
+
+        .image-wrapper {
+            position: relative;
+            padding-top: 100%;
+            overflow: hidden;
+            background: #f0f0f0;
+        }
+
+        .image-wrapper img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s;
+        }
+
+        .image-card:hover .image-wrapper img {
+            transform: scale(1.05);
+        }
+
+        .image-info {
+            padding: 12px;
+        }
+
+        .image-name {
+            font-size: 13px;
+            color: #333;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-bottom: 6px;
+        }
+
+        .image-date {
+            font-size: 12px;
+            color: #667eea;
+            font-weight: 500;
+        }
+
+        .image-date-label {
+            font-size: 11px;
+            color: #999;
+            margin-top: 2px;
+        }
+
+        .image-checkbox {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: white;
+            border: 2px solid #ddd;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            z-index: 10;
+        }
+
+        .image-checkbox:hover {
+            border-color: #667eea;
+        }
+
+        .image-checkbox.checked {
+            background: #667eea;
+            border-color: #667eea;
+        }
+
+        .image-checkbox.checked::after {
+            content: '✓';
+            color: white;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            max-width: 90%;
+            max-height: 90%;
+            position: relative;
+        }
+
+        .modal-content img {
+            max-width: 100%;
+            max-height: 85vh;
+            border-radius: 8px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-close {
+            position: absolute;
+            top: -40px;
+            right: 0;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 32px;
+            cursor: pointer;
+            opacity: 0.8;
+            transition: opacity 0.3s;
+        }
+
+        .modal-close:hover {
+            opacity: 1;
+        }
+
+        .modal-info {
+            position: absolute;
+            bottom: -50px;
+            left: 0;
+            right: 0;
+            color: white;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        .drag-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(102, 126, 234, 0.9);
+            z-index: 999;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            color: white;
+        }
+
+        .drag-overlay.active {
+            display: flex;
+        }
+
+        .drag-overlay .icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+        }
+
+        .drag-overlay p {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        @media (max-width: 768px) {
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .control-group {
+                justify-content: space-between;
+            }
+
+            .image-grid {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+                gap: 15px;
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📷 图片排序工具</h1>
+            <p>根据图片生成时间或截图时间自动排序</p>
+        </div>
+
+        <div class="controls">
+            <div class="control-group">
+                <div class="file-input-wrapper">
+                    <input type="file" id="fileInput" multiple accept="image/*">
+                    <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">
+                        📁 选择图片
+                    </button>
+                </div>
+                <button class="btn btn-danger" onclick="clearAll()">🗑️ 清空全部</button>
+            </div>
+
+            <div class="control-group">
+                <span class="control-label">排序方式：</span>
+                <select id="sortBy" onchange="sortImages()">
+                    <option value="createDate">生成时间</option>
+                    <option value="modifyDate">修改时间</option>
+                    <option value="name">文件名</option>
+                    <option value="size">文件大小</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <span class="control-label">排序顺序：</span>
+                <select id="sortOrder" onchange="sortImages()">
+                    <option value="asc">升序（旧→新）</option>
+                    <option value="desc">降序（新→旧）</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <button class="btn btn-success" onclick="openExportModal()">
+                    📄 导出Word
+                </button>
+            </div>
+        </div>
+
+        <div class="stats" id="stats">
+            <div class="stat-item">
+                <span>图片数量：</span>
+                <span class="stat-value" id="imageCount">0</span>
+            </div>
+            <div class="stat-item">
+                <span>已选择：</span>
+                <span class="stat-value" id="selectedCount">0</span>
+            </div>
+            <div class="stat-item">
+                <span>总大小：</span>
+                <span class="stat-value" id="totalSize">0 MB</span>
+            </div>
+        </div>
+
+        <div class="image-grid empty" id="imageGrid">
+            <div class="empty-state">
+                <div class="icon">📷</div>
+                <p>点击"选择图片"或拖拽图片到此处</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="drag-overlay" id="dragOverlay">
+        <div class="icon">📁</div>
+        <p>释放以上传图片</p>
+    </div>
+
+    <div class="modal" id="imageModal" onclick="closeModal()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+            <img id="modalImage" src="" alt="">
+            <div class="modal-info" id="modalInfo"></div>
+        </div>
+    </div>
+
+    <!-- 导出选项弹窗 -->
+    <div class="export-options" id="exportModal">
+        <div class="export-modal">
+            <h3>📄 导出到 Word</h3>
+            
+            <div class="export-option">
+                <label>导出范围</label>
+                <select id="exportRange">
+                    <option value="all">全部图片</option>
+                    <option value="selected">已选择的图片</option>
+                </select>
+            </div>
+
+            <div class="export-option">
+                <label>每页图片数量</label>
+                <select id="imagesPerPage">
+                    <option value="1">1 张</option>
+                    <option value="2">2 张</option>
+                    <option value="4" selected>4 张</option>
+                    <option value="6">6 张</option>
+                    <option value="9">9 张</option>
+                </select>
+            </div>
+
+            <div class="export-option">
+                <label>图片宽度（厘米）</label>
+                <select id="imageWidth">
+                    <option value="5">5 cm</option>
+                    <option value="7">7 cm</option>
+                    <option value="10" selected>10 cm</option>
+                    <option value="12">12 cm</option>
+                    <option value="15">15 cm</option>
+                </select>
+            </div>
+
+            <div class="export-option">
+                <label class="checkbox-label">
+                    <input type="checkbox" id="includeFileName" checked>
+                    <span>包含文件名</span>
+                </label>
+            </div>
+
+            <div class="export-option">
+                <label class="checkbox-label">
+                    <input type="checkbox" id="includeDate" checked>
+                    <span>包含拍摄时间</span>
+                </label>
+            </div>
+
+            <div class="export-option">
+                <label class="checkbox-label">
+                    <input type="checkbox" id="includeIndex" checked>
+                    <span>包含序号</span>
+                </label>
+            </div>
+
+            <div class="export-option">
+                <label>文档标题（可选）</label>
+                <input type="text" id="documentTitle" placeholder="请输入文档标题">
+            </div>
+
+            <div class="export-buttons">
+                <button class="btn btn-secondary" onclick="closeExportModal()">取消</button>
+                <button class="btn btn-success" onclick="exportToWord()">导出</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 进度条弹窗 -->
+    <div class="progress-overlay" id="progressOverlay">
+        <div class="progress-container">
+            <h3>正在生成 Word 文档...</h3>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-text" id="progressText">0 / 0</div>
+        </div>
+    </div>
+
+    <script>
+        let images = [];
+        let selectedImages = new Set();
+
+        // 初始化拖拽上传
+        document.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            document.getElementById('dragOverlay').classList.add('active');
+        });
+
+        document.addEventListener('dragleave', (e) => {
+            if (e.target === document.getElementById('dragOverlay')) {
+                document.getElementById('dragOverlay').classList.remove('active');
+            }
+        });
+
+        document.addEventListener('drop', (e) => {
+            e.preventDefault();
+            document.getElementById('dragOverlay').classList.remove('active');
+            
+            const files = Array.from(e.dataTransfer.files).filter(file => file.type.startsWith('image/'));
+            if (files.length > 0) {
+                handleFiles(files);
+            }
+        });
+
+        // 文件选择处理
+        document.getElementById('fileInput').addEventListener('change', (e) => {
+            handleFiles(Array.from(e.target.files));
+        });
+
+        async function handleFiles(files) {
+            const newImages = [];
+            
+            for (const file of files) {
+                const imageInfo = await getImageInfo(file);
+                newImages.push(imageInfo);
+            }
+            
+            images = [...images, ...newImages];
+            sortImages();
+            updateStats();
+        }
+
+        function getImageInfo(file) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                const img = new Image();
+                
+                reader.onload = (e) => {
+                    img.src = e.target.result;
+                    img.onload = () => {
+                        // 尝试从EXIF获取拍摄时间
+                        let createDate = file.lastModified;
+                        
+                        // 尝试解析文件名中的日期（如截图文件名：Screenshot_20240115_143022.png）
+                        const dateFromName = extractDateFromFilename(file.name);
+                        if (dateFromName) {
+                            createDate = dateFromName;
+                        }
+                        
+                        resolve({
+                            id: Date.now() + Math.random(),
+                            file: file,
+                            name: file.name,
+                            src: e.target.result,
+                            size: file.size,
+                            width: img.width,
+                            height: img.height,
+                            createDate: createDate,
+                            modifyDate: file.lastModified,
+                            type: file.type
+                        });
+                    };
+                };
+                
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function extractDateFromFilename(filename) {
+            // 匹配常见截图文件名格式
+            // 格式1: Screenshot_20240115_143022.png
+            // 格式2: IMG_20240115_143022.jpg
+            // 格式3: 2024-01-15 14.30.22.png
+            // 格式4: 20240115_143022.jpg
+            
+            const patterns = [
+                /(\d{4})(\d{2})(\d{2})[\-_]?(\d{2})(\d{2})(\d{2})/,
+                /(\d{4})[\-\.](\d{2})[\-\.](\d{2})[\s\-_]?(\d{2})[\:\.](\d{2})[\:\.]?(\d{2})?/,
+                /(\d{4})(\d{2})(\d{2})/
+            ];
+            
+            for (const pattern of patterns) {
+                const match = filename.match(pattern);
+                if (match) {
+                    const year = parseInt(match[1]);
+                    const month = parseInt(match[2]) - 1;
+                    const day = parseInt(match[3]);
+                    const hour = match[4] ? parseInt(match[4]) : 0;
+                    const minute = match[5] ? parseInt(match[5]) : 0;
+                    const second = match[6] ? parseInt(match[6]) : 0;
+                    
+                    const date = new Date(year, month, day, hour, minute, second);
+                    if (!isNaN(date.getTime())) {
+                        return date.getTime();
+                    }
+                }
+            }
+            
+            return null;
+        }
+
+        function sortImages() {
+            const sortBy = document.getElementById('sortBy').value;
+            const sortOrder = document.getElementById('sortOrder').value;
+            
+            images.sort((a, b) => {
+                let comparison = 0;
+                
+                switch (sortBy) {
+                    case 'createDate':
+                        comparison = a.createDate - b.createDate;
+                        break;
+                    case 'modifyDate':
+                        comparison = a.modifyDate - b.modifyDate;
+                        break;
+                    case 'name':
+                        comparison = a.name.localeCompare(b.name);
+                        break;
+                    case 'size':
+                        comparison = a.size - b.size;
+                        break;
+                }
+                
+                return sortOrder === 'desc' ? -comparison : comparison;
+            });
+            
+            renderImages();
+        }
+
+        function renderImages() {
+            const grid = document.getElementById('imageGrid');
+            
+            if (images.length === 0) {
+                grid.classList.add('empty');
+                grid.innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon">📷</div>
+                        <p>点击"选择图片"或拖拽图片到此处</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            grid.classList.remove('empty');
+            grid.innerHTML = images.map(img => `
+                <div class="image-card ${selectedImages.has(img.id) ? 'selected' : ''}" data-id="${img.id}">
+                    <div class="image-checkbox ${selectedImages.has(img.id) ? 'checked' : ''}" 
+                         onclick="toggleSelection(${img.id}, event)"></div>
+                    <div class="image-wrapper" onclick="openModal(${img.id})">
+                        <img src="${img.src}" alt="${img.name}">
+                    </div>
+                    <div class="image-info">
+                        <div class="image-name" title="${img.name}">${img.name}</div>
+                        <div class="image-date">${formatDate(img.createDate)}</div>
+                        <div class="image-date-label">${getDateLabel(img.createDate, img.modifyDate)}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function toggleSelection(id, event) {
+            event.stopPropagation();
+            
+            if (selectedImages.has(id)) {
+                selectedImages.delete(id);
+            } else {
+                selectedImages.add(id);
+            }
+            
+            const card = document.querySelector(`.image-card[data-id="${id}"]`);
+            const checkbox = card.querySelector('.image-checkbox');
+            
+            if (selectedImages.has(id)) {
+                card.classList.add('selected');
+                checkbox.classList.add('checked');
+            } else {
+                card.classList.remove('selected');
+                checkbox.classList.remove('checked');
+            }
+            
+            updateStats();
+        }
+
+        function openModal(id) {
+            const img = images.find(i => i.id === id);
+            if (!img) return;
+            
+            document.getElementById('modalImage').src = img.src;
+            document.getElementById('modalInfo').innerHTML = `
+                ${img.name} | ${img.width} x ${img.height} | ${formatFileSize(img.size)} | ${formatDateTime(img.createDate)}
+            `;
+            document.getElementById('imageModal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('imageModal').classList.remove('active');
+        }
+
+        function clearAll() {
+            if (images.length === 0) return;
+            
+            if (confirm('确定要清空所有图片吗？')) {
+                images = [];
+                selectedImages.clear();
+                renderImages();
+                updateStats();
+            }
+        }
+
+        function updateStats() {
+            document.getElementById('imageCount').textContent = images.length;
+            document.getElementById('selectedCount').textContent = selectedImages.size;
+            
+            const totalSize = images.reduce((sum, img) => sum + img.size, 0);
+            document.getElementById('totalSize').textContent = formatFileSize(totalSize);
+        }
+
+        function formatDate(timestamp) {
+            const date = new Date(timestamp);
+            const now = new Date();
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const dateDay = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+            
+            const diffDays = Math.floor((today - dateDay) / (1000 * 60 * 60 * 24));
+            
+            if (diffDays === 0) {
+                return `今天 ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+            } else if (diffDays === 1) {
+                return `昨天 ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+            } else if (diffDays < 7) {
+                const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
+                return `周${weekdays[date.getDay()]} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+            } else {
+                return `${date.getFullYear()}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getDate().toString().padStart(2, '0')}`;
+            }
+        }
+
+        function formatDateTime(timestamp) {
+            const date = new Date(timestamp);
+            return `${date.getFullYear()}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getDate().toString().padStart(2, '0')} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}:${date.getSeconds().toString().padStart(2, '0')}`;
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        function getDateLabel(createDate, modifyDate) {
+            // 判断时间来源
+            const createDateObj = new Date(createDate);
+            const modifyDateObj = new Date(modifyDate);
+            
+            // 如果创建时间和修改时间相差很小，可能是文件系统时间
+            const diff = Math.abs(createDate - modifyDate);
+            if (diff < 60000) { // 小于1分钟
+                return '文件时间';
+            }
+            
+            // 检查是否是文件名解析的时间
+            return '拍摄/截图时间';
+        }
+
+        // 导出相关函数
+        function openExportModal() {
+            if (images.length === 0) {
+                alert('请先添加图片');
+                return;
+            }
+            document.getElementById('exportModal').classList.add('active');
+        }
+
+        function closeExportModal() {
+            document.getElementById('exportModal').classList.remove('active');
+        }
+
+        async function exportToWord() {
+            const exportRange = document.getElementById('exportRange').value;
+            const imagesPerPage = parseInt(document.getElementById('imagesPerPage').value);
+            const imageWidth = document.getElementById('imageWidth').value;
+            const includeFileName = document.getElementById('includeFileName').checked;
+            const includeDate = document.getElementById('includeDate').checked;
+            const includeIndex = document.getElementById('includeIndex').checked;
+            const documentTitle = document.getElementById('documentTitle').value;
+
+            // 确定要导出的图片
+            let imagesToExport = exportRange === 'selected' && selectedImages.size > 0
+                ? images.filter(img => selectedImages.has(img.id))
+                : images;
+
+            if (imagesToExport.length === 0) {
+                alert('没有要导出的图片');
+                return;
+            }
+
+            closeExportModal();
+            showProgress();
+
+            // 生成 Word 文档的 HTML 内容
+            const htmlContent = await generateWordHTML(imagesToExport, {
+                imagesPerPage,
+                imageWidth,
+                includeFileName,
+                includeDate,
+                includeIndex,
+                documentTitle
+            });
+
+            // 创建并下载文件
+            const blob = new Blob([htmlContent], { type: 'application/msword' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `图片排序_${formatDateForFile(new Date())}.doc`;
+            link.click();
+
+            hideProgress();
+        }
+
+        async function generateWordHTML(images, options) {
+            const { imagesPerPage, imageWidth, includeFileName, includeDate, includeIndex, documentTitle } = options;
+            
+            // 计算每行图片数
+            const cols = Math.ceil(Math.sqrt(imagesPerPage));
+            const rows = Math.ceil(imagesPerPage / cols);
+
+            let imagesHTML = '';
+            let currentPageImages = [];
+
+            for (let i = 0; i < images.length; i++) {
+                currentPageImages.push(images[i]);
+
+                // 当达到每页数量或最后一张时，生成一页
+                if (currentPageImages.length === imagesPerPage || i === images.length - 1) {
+                    imagesHTML += generatePageHTML(currentPageImages, {
+                        cols,
+                        imageWidth,
+                        includeFileName,
+                        includeDate,
+                        includeIndex,
+                        startIndex: i - currentPageImages.length + 1
+                    });
+                    currentPageImages = [];
+                    
+                    // 更新进度
+                    updateProgress(i + 1, images.length);
+                    await delay(10);
+                }
+            }
+
+            const titleHTML = documentTitle 
+                ? `<h1 style="text-align: center; font-size: 24pt; margin-bottom: 20pt;">${escapeHtml(documentTitle)}</h1>` 
+                : '';
+
+            return `
+                <html xmlns:o="urn:schemas-microsoft-com:office:office" 
+                      xmlns:w="urn:schemas-microsoft-com:office:word" 
+                      xmlns="http://www.w3.org/TR/REC-html40">
+                <head>
+                    <meta charset="utf-8">
+                    <title>图片排序</title>
+                    <style>
+                        @page {
+                            size: 21cm 29.7cm;
+                            margin: 2cm;
+                        }
+                        body {
+                            font-family: "Microsoft YaHei", SimSun, sans-serif;
+                            font-size: 10pt;
+                        }
+                        .page {
+                            page-break-after: always;
+                        }
+                        .page:last-child {
+                            page-break-after: auto;
+                        }
+                        .image-grid {
+                            width: 100%;
+                            border-collapse: collapse;
+                        }
+                        .image-cell {
+                            padding: 10pt;
+                            text-align: center;
+                            vertical-align: top;
+                        }
+                        .image-cell img {
+                            max-width: 100%;
+                            height: auto;
+                        }
+                        .image-info {
+                            margin-top: 5pt;
+                            font-size: 9pt;
+                            color: #666;
+                            text-align: center;
+                        }
+                        .image-index {
+                            font-weight: bold;
+                            color: #333;
+                        }
+                    </style>
+                </head>
+                <body>
+                    ${titleHTML}
+                    ${imagesHTML}
+                </body>
+                </html>
+            `;
+        }
+
+        function generatePageHTML(pageImages, options) {
+            const { cols, imageWidth, includeFileName, includeDate, includeIndex, startIndex } = options;
+            
+            let tableRows = '';
+            let cellIndex = 0;
+
+            for (let row = 0; row < Math.ceil(pageImages.length / cols); row++) {
+                let rowCells = '';
+                for (let col = 0; col < cols; col++) {
+                    if (cellIndex < pageImages.length) {
+                        const img = pageImages[cellIndex];
+                        const index = startIndex + cellIndex + 1;
+                        
+                        let infoParts = [];
+                        if (includeIndex) infoParts.push(`<span class="image-index">[${index}]</span>`);
+                        if (includeFileName) infoParts.push(escapeHtml(img.name));
+                        if (includeDate) infoParts.push(formatDateTime(img.createDate));
+
+                        rowCells += `
+                            <td class="image-cell" style="width: ${100/cols}%;">
+                                <img src="${img.src}" style="width: ${imageWidth}cm;" />
+                                <div class="image-info">${infoParts.join('<br>')}</div>
+                            </td>
+                        `;
+                    } else {
+                        rowCells += `<td class="image-cell" style="width: ${100/cols}%;"></td>`;
+                    }
+                    cellIndex++;
+                }
+                tableRows += `<tr>${rowCells}</tr>`;
+            }
+
+            return `
+                <div class="page">
+                    <table class="image-grid">${tableRows}</table>
+                </div>
+            `;
+        }
+
+        function showProgress() {
+            document.getElementById('progressOverlay').classList.add('active');
+            updateProgress(0, 1);
+        }
+
+        function hideProgress() {
+            document.getElementById('progressOverlay').classList.remove('active');
+        }
+
+        function updateProgress(current, total) {
+            const percentage = (current / total) * 100;
+            document.getElementById('progressFill').style.width = percentage + '%';
+            document.getElementById('progressText').textContent = `${current} / ${total}`;
+        }
+
+        function delay(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function formatDateForFile(date) {
+            return `${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}_${date.getHours().toString().padStart(2, '0')}${date.getMinutes().toString().padStart(2, '0')}`;
+        }
+
+        // 键盘快捷键
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeModal();
+                closeExportModal();
+            }
+        });
+    </script>
+</body>
+</html>
