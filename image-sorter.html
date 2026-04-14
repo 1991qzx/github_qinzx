@@ -34,6 +34,10 @@
             text-align: center;
         }
 
+        .header {
+            position: relative;
+        }
+
         .header h1 {
             font-size: 28px;
             font-weight: bold;
@@ -44,6 +48,28 @@
         .header p {
             opacity: 0.9;
             font-size: 14px;
+        }
+
+        .back-btn {
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            text-decoration: none;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-50%) scale(1.05);
         }
 
         .controls {
@@ -596,6 +622,7 @@
 <body>
     <div class="container">
         <div class="header">
+            <a href="index.html" class="back-btn">← 返回</a>
             <h1>📷 图片排序工具</h1>
             <p>根据图片生成时间或截图时间自动排序</p>
         </div>
