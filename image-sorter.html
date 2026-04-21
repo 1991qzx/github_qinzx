@@ -734,8 +734,9 @@
             <div class="export-option">
                 <label>图片排列方式</label>
                 <select id="imageLayout">
-                    <option value="horizontal" selected>横向排列（逐行填充）</option>
-                    <option value="vertical">竖向排列（逐列填充）</option>
+                    <option value="grid" selected>网格排列（田字形/九宫格等）</option>
+                    <option value="horizontal">横向排列（单行不换行）</option>
+                    <option value="vertical">竖向排列（单列不换列）</option>
                 </select>
             </div>
 
@@ -778,6 +779,7 @@
 
             <div class="export-buttons">
                 <button class="btn btn-secondary" onclick="closeExportModal()">取消</button>
+                <button class="btn btn-primary" onclick="previewLayout()">👁️ 预览效果</button>
                 <button class="btn btn-success" onclick="exportToWord()">导出</button>
             </div>
         </div>
@@ -1137,6 +1139,162 @@
             document.getElementById('exportModal').classList.remove('active');
         }
 
+        function previewLayout() {
+            const imagesPerPage = parseInt(document.getElementById('imagesPerPage').value);
+            const imageLayout = document.getElementById('imageLayout').value;
+            
+            // 确定要预览的图片
+            const exportRange = document.getElementById('exportRange').value;
+            let imagesToPreview = exportRange === 'selected' && selectedImages.size > 0
+                ? images.filter(img => selectedImages.has(img.id))
+                : images;
+            
+            if (imagesToPreview.length === 0) {
+                alert('请先添加图片');
+                return;
+            }
+            
+            // 取前N张图片预览
+            imagesToPreview = imagesToPreview.slice(0, imagesPerPage);
+            
+            // 创建预览页面
+            const cols = Math.ceil(Math.sqrt(imagesPerPage));
+            let previewHTML = `
+                <html>
+                <head>
+                    <meta charset="utf-8">
+                    <title>排列预览 - ${imageLayout === 'horizontal' ? '横向' : '竖向'}</title>
+                    <style>
+                        body {
+                            font-family: "Microsoft YaHei", sans-serif;
+                            padding: 20px;
+                            background: #f5f5f5;
+                        }
+                        .preview-container {
+                            background: white;
+                            padding: 30px;
+                            border-radius: 8px;
+                            max-width: 800px;
+                            margin: 0 auto;
+                            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                        }
+                        h2 {
+                            text-align: center;
+                            color: #333;
+                            margin-bottom: 20px;
+                        }
+                        .info {
+                            text-align: center;
+                            color: #666;
+                            margin-bottom: 20px;
+                            padding: 10px;
+                            background: #f0f0f0;
+                            border-radius: 4px;
+                        }
+                        table {
+                            width: 100%;
+                            border-collapse: collapse;
+                            table-layout: fixed;
+                        }
+                        td {
+                            padding: 15px;
+                            text-align: center;
+                            vertical-align: top;
+                            border: 2px dashed #ddd;
+                            width: ${100/cols}%;
+                        }
+                        td img {
+                            width: 100%;
+                            max-width: 200px;
+                            height: auto;
+                            display: block;
+                            margin: 0 auto 10px;
+                            border-radius: 4px;
+                        }
+                        .label {
+                            font-size: 14px;
+                            font-weight: bold;
+                            color: #667eea;
+                        }
+                        .name {
+                            font-size: 12px;
+                            color: #666;
+                            margin-top: 5px;
+                            word-wrap: break-word;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="preview-container">
+                        <h2>${imageLayout === 'horizontal' ? '📐 横向排列（逐行填充）' : '📐 竖向排列（逐列填充）'}</h2>
+                        <div class="info">
+                            每页 ${imagesPerPage} 张 | ${cols} 列 | 共 ${imagesToPreview.length} 张图片
+                        </div>
+                        <table>
+            `;
+            
+            // 生成预览表格
+            const totalCells = imagesToPreview.length;
+            const actualRows = Math.ceil(totalCells / cols);
+            let tableMatrix = [];
+            
+            for (let r = 0; r < actualRows; r++) {
+                tableMatrix[r] = [];
+                for (let c = 0; c < cols; c++) {
+                    tableMatrix[r][c] = null;
+                }
+            }
+            
+            if (imageLayout === 'horizontal') {
+                let imgIndex = 0;
+                for (let r = 0; r < actualRows && imgIndex < totalCells; r++) {
+                    for (let c = 0; c < cols && imgIndex < totalCells; c++) {
+                        tableMatrix[r][c] = imagesToPreview[imgIndex];
+                        imgIndex++;
+                    }
+                }
+            } else {
+                let imgIndex = 0;
+                for (let c = 0; c < cols && imgIndex < totalCells; c++) {
+                    for (let r = 0; r < actualRows && imgIndex < totalCells; r++) {
+                        tableMatrix[r][c] = imagesToPreview[imgIndex];
+                        imgIndex++;
+                    }
+                }
+            }
+            
+            for (let r = 0; r < actualRows; r++) {
+                previewHTML += '<tr>';
+                for (let c = 0; c < cols; c++) {
+                    const img = tableMatrix[r][c];
+                    if (img) {
+                        previewHTML += `
+                            <td>
+                                <img src="${img.src}" />
+                                <div class="label">[${images.indexOf(img) + 1}]</div>
+                                <div class="name">${img.name}</div>
+                            </td>
+                        `;
+                    } else {
+                        previewHTML += '<td></td>';
+                    }
+                }
+                previewHTML += '</tr>';
+            }
+            
+            previewHTML += `
+                        </table>
+                    </div>
+                </body>
+                </html>
+            `;
+            
+            // 在新窗口打开预览
+            const previewWindow = window.open('', '_blank');
+            previewWindow.document.write(previewHTML);
+            previewWindow.document.close();
+        }
+
         async function exportToWord() {
             const exportRange = document.getElementById('exportRange').value;
             const imagesPerPage = parseInt(document.getElementById('imagesPerPage').value);
@@ -1146,6 +1304,17 @@
             const includeDate = document.getElementById('includeDate').checked;
             const includeIndex = document.getElementById('includeIndex').checked;
             const documentTitle = document.getElementById('documentTitle').value;
+
+            // 调试信息
+            console.log('导出设置:', {
+                exportRange,
+                imagesPerPage,
+                imageLayout,
+                imageWidth,
+                includeFileName,
+                includeDate,
+                includeIndex
+            });
 
             // 确定要导出的图片
             let imagesToExport = exportRange === 'selected' && selectedImages.size > 0
@@ -1184,9 +1353,21 @@
         async function generateWordHTML(images, options) {
             const { imagesPerPage, imageLayout, imageWidth, includeFileName, includeDate, includeIndex, documentTitle } = options;
             
-            // 计算行列数
-            const cols = Math.ceil(Math.sqrt(imagesPerPage));
-            const rows = Math.ceil(imagesPerPage / cols);
+            // 根据排列方式计算行列数
+            let cols, rows;
+            if (imageLayout === 'horizontal') {
+                // 横向排列：所有图片在一行
+                cols = imagesPerPage;
+                rows = 1;
+            } else if (imageLayout === 'vertical') {
+                // 竖向排列：所有图片在一列
+                cols = 1;
+                rows = imagesPerPage;
+            } else {
+                // 网格排列：根据数量计算
+                cols = Math.ceil(Math.sqrt(imagesPerPage));
+                rows = Math.ceil(imagesPerPage / cols);
+            }
 
             let imagesHTML = '';
             let currentPageImages = [];
@@ -1243,21 +1424,26 @@
                         .image-grid {
                             width: 100%;
                             border-collapse: collapse;
+                            table-layout: fixed;
                         }
                         .image-cell {
                             padding: 10pt;
                             text-align: center;
                             vertical-align: top;
+                            word-wrap: break-word;
                         }
                         .image-cell img {
                             max-width: 100%;
                             height: auto;
+                            display: block;
+                            margin: 0 auto;
                         }
                         .image-info {
                             margin-top: 5pt;
                             font-size: 9pt;
                             color: #666;
                             text-align: center;
+                            word-wrap: break-word;
                         }
                         .image-index {
                             font-weight: bold;
@@ -1276,32 +1462,70 @@
         function generatePageHTML(pageImages, options) {
             const { cols, rows, imageLayout, imageWidth, includeFileName, includeDate, includeIndex, startIndex } = options;
             
-            // 根据排列方式重组图片顺序
-            let orderedImages = [];
+            // 调试信息
+            console.log('生成页面参数:', {
+                totalImages: pageImages.length,
+                cols,
+                rows,
+                imageLayout,
+                startIndex
+            });
+            
+            // 根据排列方式创建表格矩阵
+            const totalCells = pageImages.length;
+            
+            // 创建二维数组表示表格
+            let tableMatrix = [];
+            for (let r = 0; r < rows; r++) {
+                tableMatrix[r] = [];
+                for (let c = 0; c < cols; c++) {
+                    tableMatrix[r][c] = null;
+                }
+            }
+            
+            // 填充矩阵
             if (imageLayout === 'horizontal') {
-                // 横向排列：逐行填充（默认）
-                orderedImages = [...pageImages];
+                // 横向排列：所有图片在一行
+                // [1, 2, 3, 4]
+                console.log('使用横向排列（单行）');
+                for (let c = 0; c < cols && c < totalCells; c++) {
+                    tableMatrix[0][c] = pageImages[c];
+                    console.log(`  位置[0][${c}] = 图片${c + 1}`);
+                }
+            } else if (imageLayout === 'vertical') {
+                // 竖向排列：所有图片在一列
+                // [1]
+                // [2]
+                // [3]
+                console.log('使用竖向排列（单列）');
+                for (let r = 0; r < rows && r < totalCells; r++) {
+                    tableMatrix[r][0] = pageImages[r];
+                    console.log(`  位置[${r}][0] = 图片${r + 1}`);
+                }
             } else {
-                // 竖向排列：逐列填充
-                const actualRows = Math.ceil(pageImages.length / cols);
-                for (let col = 0; col < cols; col++) {
-                    for (let row = 0; row < actualRows; row++) {
-                        const index = row * cols + col;
-                        if (index < pageImages.length) {
-                            orderedImages.push(pageImages[index]);
-                        }
+                // 网格排列：逐行填充
+                // [1, 2]
+                // [3, 4]
+                console.log('使用网格排列');
+                let imgIndex = 0;
+                for (let r = 0; r < rows && imgIndex < totalCells; r++) {
+                    for (let c = 0; c < cols && imgIndex < totalCells; c++) {
+                        tableMatrix[r][c] = pageImages[imgIndex];
+                        console.log(`  位置[${r}][${c}] = 图片${imgIndex + 1}`);
+                        imgIndex++;
                     }
                 }
             }
             
+            // 生成 HTML 表格
             let tableRows = '';
             let cellIndex = 0;
-
-            for (let row = 0; row < Math.ceil(orderedImages.length / cols); row++) {
+            
+            for (let r = 0; r < rows; r++) {
                 let rowCells = '';
-                for (let col = 0; col < cols; col++) {
-                    if (cellIndex < orderedImages.length) {
-                        const img = orderedImages[cellIndex];
+                for (let c = 0; c < cols; c++) {
+                    const img = tableMatrix[r][c];
+                    if (img) {
                         const index = startIndex + cellIndex + 1;
                         
                         let infoParts = [];
