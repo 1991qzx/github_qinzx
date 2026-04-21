@@ -732,6 +732,14 @@
             </div>
 
             <div class="export-option">
+                <label>图片排列方式</label>
+                <select id="imageLayout">
+                    <option value="horizontal" selected>横向排列（逐行填充）</option>
+                    <option value="vertical">竖向排列（逐列填充）</option>
+                </select>
+            </div>
+
+            <div class="export-option">
                 <label>图片宽度（厘米）</label>
                 <select id="imageWidth">
                     <option value="5">5 cm</option>
@@ -1132,6 +1140,7 @@
         async function exportToWord() {
             const exportRange = document.getElementById('exportRange').value;
             const imagesPerPage = parseInt(document.getElementById('imagesPerPage').value);
+            const imageLayout = document.getElementById('imageLayout').value;
             const imageWidth = document.getElementById('imageWidth').value;
             const includeFileName = document.getElementById('includeFileName').checked;
             const includeDate = document.getElementById('includeDate').checked;
@@ -1154,6 +1163,7 @@
             // 生成 Word 文档的 HTML 内容
             const htmlContent = await generateWordHTML(imagesToExport, {
                 imagesPerPage,
+                imageLayout,
                 imageWidth,
                 includeFileName,
                 includeDate,
@@ -1172,9 +1182,9 @@
         }
 
         async function generateWordHTML(images, options) {
-            const { imagesPerPage, imageWidth, includeFileName, includeDate, includeIndex, documentTitle } = options;
+            const { imagesPerPage, imageLayout, imageWidth, includeFileName, includeDate, includeIndex, documentTitle } = options;
             
-            // 计算每行图片数
+            // 计算行列数
             const cols = Math.ceil(Math.sqrt(imagesPerPage));
             const rows = Math.ceil(imagesPerPage / cols);
 
@@ -1188,6 +1198,8 @@
                 if (currentPageImages.length === imagesPerPage || i === images.length - 1) {
                     imagesHTML += generatePageHTML(currentPageImages, {
                         cols,
+                        rows,
+                        imageLayout,
                         imageWidth,
                         includeFileName,
                         includeDate,
@@ -1262,16 +1274,34 @@
         }
 
         function generatePageHTML(pageImages, options) {
-            const { cols, imageWidth, includeFileName, includeDate, includeIndex, startIndex } = options;
+            const { cols, rows, imageLayout, imageWidth, includeFileName, includeDate, includeIndex, startIndex } = options;
+            
+            // 根据排列方式重组图片顺序
+            let orderedImages = [];
+            if (imageLayout === 'horizontal') {
+                // 横向排列：逐行填充（默认）
+                orderedImages = [...pageImages];
+            } else {
+                // 竖向排列：逐列填充
+                const actualRows = Math.ceil(pageImages.length / cols);
+                for (let col = 0; col < cols; col++) {
+                    for (let row = 0; row < actualRows; row++) {
+                        const index = row * cols + col;
+                        if (index < pageImages.length) {
+                            orderedImages.push(pageImages[index]);
+                        }
+                    }
+                }
+            }
             
             let tableRows = '';
             let cellIndex = 0;
 
-            for (let row = 0; row < Math.ceil(pageImages.length / cols); row++) {
+            for (let row = 0; row < Math.ceil(orderedImages.length / cols); row++) {
                 let rowCells = '';
                 for (let col = 0; col < cols; col++) {
-                    if (cellIndex < pageImages.length) {
-                        const img = pageImages[cellIndex];
+                    if (cellIndex < orderedImages.length) {
+                        const img = orderedImages[cellIndex];
                         const index = startIndex + cellIndex + 1;
                         
                         let infoParts = [];
