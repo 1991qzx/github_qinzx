@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>随机点餐</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #232526 0%, #414345 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 480px;
+            margin: 0 auto;
+            background: rgba(35, 37, 38, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: white;
+            padding: 15px 20px;
+            text-align: center;
+            position: relative;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: bold;
+            letter-spacing: 4px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            margin: 0;
+        }
+
+        .back-btn {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 6px 14px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            text-decoration: none;
+            backdrop-filter: blur(10px);
+        }
+
+        .back-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .main-area {
+            padding: 30px 20px;
+            text-align: center;
+        }
+
+        .result-display {
+            background: linear-gradient(135deg, #1a1a2e 0%, #0f3460 100%);
+            border-radius: 20px;
+            padding: 40px 20px;
+            margin-bottom: 30px;
+            min-height: 140px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .result-display::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: repeating-linear-gradient(
+                45deg,
+                transparent,
+                transparent 10px,
+                rgba(255,255,255,0.05) 10px,
+                rgba(255,255,255,0.05) 20px
+            );
+            animation: slide 20s linear infinite;
+        }
+
+        @keyframes slide {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(50px, 50px); }
+        }
+
+        .result-text {
+            font-size: 36px;
+            font-weight: bold;
+            color: white;
+            text-shadow: 2px 2px 8px rgba(0,0,0,0.3);
+            z-index: 1;
+            transition: all 0.2s ease;
+        }
+
+        .result-text.rolling {
+            transform: scale(1.05);
+            opacity: 0.85;
+        }
+
+        .result-text.highlighted {
+            animation: pulseGlow 1.5s ease-in-out infinite;
+            transform: scale(1.15);
+        }
+
+        @keyframes pulseGlow {
+            0%, 100% {
+                text-shadow: 0 0 20px rgba(100, 149, 237, 0.8), 0 0 40px rgba(75, 0, 130, 0.6), 0 0 60px rgba(75, 0, 130, 0.4);
+            }
+            50% {
+                text-shadow: 0 0 30px rgba(100, 149, 237, 1), 0 0 60px rgba(75, 0, 130, 0.8), 0 0 90px rgba(75, 0, 130, 0.6);
+            }
+        }
+
+        .spin-btn {
+            background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%);
+            color: white;
+            border: none;
+            padding: 16px 60px;
+            font-size: 20px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: bold;
+            letter-spacing: 4px;
+            box-shadow: 0 8px 30px rgba(255, 65, 108, 0.4);
+            transition: all 0.3s ease;
+            margin-bottom: 30px;
+        }
+
+        .spin-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 40px rgba(255, 65, 108, 0.5);
+        }
+
+        .spin-btn:active {
+            transform: translateY(0);
+        }
+
+        .spin-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .category-filter {
+            margin-bottom: 20px;
+        }
+
+        .category-filter label {
+            display: block;
+            font-size: 14px;
+            color: #aaa;
+            margin-bottom: 10px;
+        }
+
+        .category-btns {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+        }
+
+        .category-btn {
+            padding: 6px 16px;
+            border: 2px solid #444;
+            background: #2a2a2a;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 13px;
+            color: #ccc;
+            transition: all 0.3s ease;
+        }
+
+        .category-btn.active {
+            border-color: #ff416c;
+            background: #ff416c;
+            color: white;
+        }
+
+        .food-list-section {
+            border-top: 1px solid #333;
+            padding: 20px;
+        }
+
+        .food-list-section h3 {
+            font-size: 16px;
+            color: #e0e0e0;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .food-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 15px;
+            min-height: 40px;
+        }
+
+        .food-tag {
+            background: #2a2a2a;
+            padding: 6px 14px;
+            border-radius: 16px;
+            font-size: 13px;
+            color: #ccc;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            animation: popIn 0.3s ease;
+        }
+
+        @keyframes popIn {
+            from {
+                transform: scale(0);
+                opacity: 0;
+            }
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .food-tag .remove {
+            cursor: pointer;
+            color: #888;
+            font-weight: bold;
+            font-size: 16px;
+            line-height: 1;
+        }
+
+        .food-tag .remove:hover {
+            color: #ff416c;
+        }
+
+        .add-food {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .add-food input {
+            flex: 1;
+            padding: 10px 16px;
+            border: 2px solid #444;
+            border-radius: 12px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.3s ease;
+            background: #2a2a2a;
+            color: #e0e0e0;
+        }
+
+        .add-food input:focus {
+            border-color: #ff416c;
+        }
+
+        .add-food select {
+            padding: 10px 12px;
+            border: 2px solid #444;
+            border-radius: 12px;
+            font-size: 14px;
+            outline: none;
+            background: #2a2a2a;
+            color: #e0e0e0;
+        }
+
+        .add-food select:focus {
+            border-color: #ff416c;
+        }
+
+        .add-food button {
+            padding: 10px 20px;
+            background: #ff416c;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .add-food button:hover {
+            background: #e63a5a;
+        }
+
+        .preset-btns {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 15px;
+            justify-content: center;
+        }
+
+        .preset-btn {
+            padding: 6px 12px;
+            background: #2a2a2a;
+            border: 1px dashed #555;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 12px;
+            color: #aaa;
+        }
+
+        .preset-btn:hover {
+            background: #333;
+            border-color: #777;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <a href="index.html" class="back-btn">返回</a>
+            <h1>随机点餐</h1>
+        </div>
+
+        <div class="main-area">
+            <div class="result-display">
+                <div class="result-text" id="resultText">点击按钮开始</div>
+            </div>
+
+            <button class="spin-btn" id="spinBtn" onclick="startSpin()">开始抽取</button>
+
+            <div class="category-filter">
+                <label>选择分类</label>
+                <div class="category-btns" id="categoryBtns">
+                    <button class="category-btn active" data-cat="all">全部</button>
+                    <button class="category-btn" data-cat="中餐">中餐</button>
+                    <button class="category-btn" data-cat="西餐">西餐</button>
+                    <button class="category-btn" data-cat="快餐">快餐</button>
+                    <button class="category-btn" data-cat="小吃">小吃</button>
+                    <button class="category-btn" data-cat="火锅烧烤">火锅烧烤</button>
+                    <button class="category-btn" data-cat="面食">面食</button>
+                    <button class="category-btn" data-cat="轻食">轻食</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="food-list-section">
+            <h3>当前候选菜单 (<span id="foodCount">0</span>)</h3>
+            <div class="food-tags" id="foodTags"></div>
+            <div class="add-food">
+                <input type="text" id="newFoodName" placeholder="输入菜品名称">
+                <select id="newFoodCategory">
+                    <option value="中餐">中餐</option>
+                    <option value="西餐">西餐</option>
+                    <option value="快餐">快餐</option>
+                    <option value="小吃">小吃</option>
+                    <option value="火锅烧烤">火锅烧烤</option>
+                    <option value="面食">面食</option>
+                    <option value="轻食营养餐">轻食</option>
+                    <option value="其他">其他</option>
+                </select>
+                <button onclick="addFood()">添加</button>
+            </div>
+            <div class="preset-btns">
+                <button class="preset-btn" onclick="loadPreset('default')">加载默认菜单</button>
+                <button class="preset-btn" onclick="clearAll()">清空菜单</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let foods = [];
+        let currentCategory = 'all';
+        let isSpinning = false;
+
+        const defaultFoods = [
+            { name: '宫保鸡丁', category: '中餐' },
+            { name: '麻婆豆腐', category: '中餐' },
+            { name: '糖醋排骨', category: '中餐' },
+            { name: '红烧肉', category: '中餐' },
+            { name: '酸菜鱼', category: '中餐' },
+            { name: '牛排', category: '西餐' },
+            { name: '意大利面', category: '西餐' },
+            { name: '披萨', category: '西餐' },
+            { name: '汉堡', category: '快餐' },
+            { name: '炸鸡', category: '快餐' },
+            { name: '麻辣烫', category: '快餐' },
+            { name: '煎饼果子', category: '小吃' },
+            { name: '烤冷面', category: '小吃' },
+            { name: '肉夹馍', category: '小吃' },
+            { name: '火锅', category: '火锅烧烤' },
+            { name: '烤肉', category: '火锅烧烤' },
+            { name: '烤串', category: '火锅烧烤' },
+            { name: '重庆小面', category: '面食' },
+            { name: '兰州拉面', category: '面食' },
+            { name: '刀削面', category: '面食' },
+            { name: '螺蛳粉', category: '面食' },
+            { name: '蔬菜沙拉', category: '轻食' },
+            { name: '鸡胸肉便当', category: '轻食' },
+            { name: '牛油果吐司', category: '轻食' },
+            { name: '全麦三明治', category: '轻食' },
+            { name: '藜麦碗', category: '轻食' },
+            { name: '水果酸奶杯', category: '轻食' },
+        ];
+
+        function loadPreset(type) {
+            if (type === 'default') {
+                foods = [...defaultFoods];
+            }
+            renderFoods();
+            updateFoodCount();
+        }
+
+        function clearAll() {
+            foods = [];
+            renderFoods();
+            updateFoodCount();
+        }
+
+        function addFood() {
+            const nameInput = document.getElementById('newFoodName');
+            const categorySelect = document.getElementById('newFoodCategory');
+            const name = nameInput.value.trim();
+            const category = categorySelect.value;
+
+            if (!name) {
+                alert('请输入菜品名称');
+                return;
+            }
+
+            if (foods.some(f => f.name === name)) {
+                alert('该菜品已存在');
+                return;
+            }
+
+            foods.push({ name, category });
+            nameInput.value = '';
+            renderFoods();
+            updateFoodCount();
+        }
+
+        function removeFood(name) {
+            foods = foods.filter(f => f.name !== name);
+            renderFoods();
+            updateFoodCount();
+        }
+
+        function renderFoods() {
+            const container = document.getElementById('foodTags');
+            container.innerHTML = '';
+
+            const filtered = currentCategory === 'all'
+                ? foods
+                : foods.filter(f => f.category === currentCategory);
+
+            filtered.forEach(food => {
+                const tag = document.createElement('div');
+                tag.className = 'food-tag';
+                tag.innerHTML = `${food.name}<span class="remove" onclick="removeFood('${food.name}')">×</span>`;
+                container.appendChild(tag);
+            });
+        }
+
+        function updateFoodCount() {
+            const filtered = currentCategory === 'all'
+                ? foods
+                : foods.filter(f => f.category === currentCategory);
+            document.getElementById('foodCount').textContent = filtered.length;
+        }
+
+        function getFilteredFoods() {
+            return currentCategory === 'all'
+                ? foods
+                : foods.filter(f => f.category === currentCategory);
+        }
+
+        function startSpin() {
+            if (isSpinning) return;
+
+            const candidates = getFilteredFoods();
+            if (candidates.length === 0) {
+                alert('请先添加菜品或选择其他分类');
+                return;
+            }
+
+            isSpinning = true;
+            const btn = document.getElementById('spinBtn');
+            const resultText = document.getElementById('resultText');
+
+            btn.disabled = true;
+            btn.textContent = '抽取中...';
+            resultText.classList.add('rolling');
+            resultText.classList.remove('highlighted');
+
+            let count = 0;
+            const maxCount = 25;
+            const interval = setInterval(() => {
+                const randomFood = candidates[Math.floor(Math.random() * candidates.length)];
+                resultText.textContent = randomFood.name;
+                count++;
+
+                if (count >= maxCount) {
+                    clearInterval(interval);
+                    resultText.classList.remove('rolling');
+                    resultText.classList.add('highlighted');
+                    btn.disabled = false;
+                    btn.textContent = '再来一次';
+                    isSpinning = false;
+                }
+            }, 80 + count * 8);
+        }
+
+        document.getElementById('categoryBtns').addEventListener('click', function(e) {
+            if (e.target.classList.contains('category-btn')) {
+                document.querySelectorAll('.category-btn').forEach(btn => btn.classList.remove('active'));
+                e.target.classList.add('active');
+                currentCategory = e.target.dataset.cat;
+                renderFoods();
+                updateFoodCount();
+            }
+        });
+
+        document.getElementById('newFoodName').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                addFood();
+            }
+        });
+
+        // 初始化
+        loadPreset('default');
+    </script>
+</body>
+</html>
