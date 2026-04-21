@@ -446,13 +446,35 @@
 
             foods.push({ name, category });
             nameInput.value = '';
-            renderFoods();
+            
+            // 局部添加，不重新渲染整个列表
+            if (currentCategory === 'all' || currentCategory === category) {
+                const container = document.getElementById('foodTags');
+                const tag = document.createElement('div');
+                tag.className = 'food-tag';
+                tag.innerHTML = `${name}<span class="remove" onclick="removeFood('${name}')">×</span>`;
+                tag.style.animation = 'popIn 0.3s ease';
+                container.appendChild(tag);
+            }
             updateFoodCount();
         }
 
         function removeFood(name) {
+            // 先更新数据
             foods = foods.filter(f => f.name !== name);
-            renderFoods();
+            
+            // 局部删除，不重新渲染整个列表
+            const container = document.getElementById('foodTags');
+            const tags = container.querySelectorAll('.food-tag');
+            tags.forEach(tag => {
+                // 提取标签文本（去除 × 符号）
+                const tagText = tag.childNodes[0].textContent.trim();
+                if (tagText === name) {
+                    tag.style.animation = 'popIn 0.2s ease reverse';
+                    setTimeout(() => tag.remove(), 200);
+                }
+            });
+            
             updateFoodCount();
         }
 
